@@ -22,9 +22,9 @@ class CustomFilterDropdown extends StatelessWidget {
     return PopupMenuButton<int>(
       onSelected: (index) {
         if (onSelectedIndex != null) onSelectedIndex!(index);
-        ScaffoldMessenger.of(context).showSnackBar(
+        /*ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Filtre sélectionné: ${index + 1}')),
-        );
+        );*/
       },
       itemBuilder: (context) {
         return List.generate(

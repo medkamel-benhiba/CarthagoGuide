@@ -6,20 +6,31 @@ import '../services/api_service.dart';
 class HotelProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
 
-  /// Cached hotels per destination
-  final Map<String, List<Hotel>> _hotelsByDestination = {};
-
-  /// All fetched hotels
+  /// All fetched hotels (raw data from API)
   List<Hotel> _allHotels = [];
   List<Hotel> get allHotels => _allHotels;
 
-  /// Current displayed hotels
+  /// Hotels shown on screen after filters + pagination
   List<Hotel> _hotels = [];
   List<Hotel> get hotels => _hotels;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  /// Pagination
+  int _pageSize = 10;
+  int get pageSize => _pageSize;
+
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool get hasMore => _hasMore;
+
+  /// Filters
+  int? selectedStars;
+  String? selectedDestination;
+  String searchQuery = "";
+
+  /// Hotel Details
   HotelDetail? _selectedHotel;
   HotelDetail? get selectedHotel => _selectedHotel;
 
@@ -29,57 +40,161 @@ class HotelProvider with ChangeNotifier {
   String? _errorDetail;
   String? get errorDetail => _errorDetail;
 
+  /// Cached by destination
+  final Map<String, List<Hotel>> _hotelsByDestination = {};
 
-  //optimised for pagination
-  List<dynamic> _searchResults = [];
-  List<dynamic> get searchResults => _searchResults;
-
-  bool _hasMoreSearchResults = true;
-  bool get hasMoreSearchResults => _hasMoreSearchResults;
-
-  bool _isInitialSearchLoading = false;
-  bool get isInitialSearchLoading => _isInitialSearchLoading;
-
-  bool _isLoadingMoreResults = false;
-  bool get isLoadingMoreResults => _isLoadingMoreResults;
-
-
+  /// Hotels by state (governorate)
   final Map<String, List<Hotel>> _hotelsByState = {};
-  List<Hotel> get hotelsByState => _currentState != null ? _hotelsByState[_currentState!] ?? [] : [];
   String? _currentState;
 
+  List<Hotel> get hotelsByState =>
+      _currentState != null ? _hotelsByState[_currentState!] ?? [] : [];
 
-  // ===== Fetch all hotels =====
+  // ---------------------------------------------------------------------------
+  // 🚀 FETCH ALL HOTELS
+  // ---------------------------------------------------------------------------
   Future<void> fetchAllHotels() async {
+    if (_isLoading) return;
+
     _isLoading = true;
     notifyListeners();
 
     try {
       _allHotels = await _apiService.gethotels();
-      // Pre-cache per destination
-      for (var hotel in _allHotels) {
-        final destId = hotel.destinationId;
-        if (!_hotelsByDestination.containsKey(destId)) {
-          _hotelsByDestination[destId] = [];
-        }
-        _hotelsByDestination[destId]!.add(hotel);
-      }
+
+      // First page
+      _hotels = _allHotels.take(_pageSize).toList();
+
+      _currentPage = 1;
+      _hasMore = _hotels.length < _allHotels.length;
+
     } catch (e) {
       _allHotels = [];
-      debugPrint("Error fetching hotels: $e");
+      _hotels = [];
+      debugPrint("❌ Error fetching hotels: $e");
     }
 
     _isLoading = false;
     notifyListeners();
   }
 
-  // ===== Get hotels by destination from cache =======
-  void setHotelsByDestination(String? destinationId) {
-    _hotels = _hotelsByDestination[destinationId] ?? [];
+  // ---------------------------------------------------------------------------
+  // 🔎 SEARCH + FILTERS
+  // ---------------------------------------------------------------------------
+  void setSearchQuery(String value) {
+    searchQuery = value.trim().toLowerCase();
+    applyFilters();
+  }
+
+  void setStars(int? stars) {
+    selectedStars = stars;
+    applyFilters();
+  }
+
+  void setDestination(String? destination) {
+    selectedDestination = destination;
+    applyFilters();
+  }
+
+  /// Apply search + stars + destination
+  void applyFilters() {
+    List<Hotel> filtered = _allHotels.where((hotel) {
+      final matchesSearch = hotel.name.toLowerCase().contains(searchQuery) ||
+          (hotel.destinationName?.toLowerCase().contains(searchQuery) ?? false);
+
+      final matchesStars =
+          selectedStars == null ||
+              (hotel.categoryCode?.toInt() ?? 0) == selectedStars;
+
+      final matchesDestination =
+          selectedDestination == null ||
+              hotel.destinationName == selectedDestination;
+
+      return matchesSearch && matchesStars && matchesDestination;
+    }).toList();
+
+    // Reset pagination after filters
+    _currentPage = 1;
+    _hasMore = filtered.length > _pageSize;
+
+    _hotels = filtered.take(_pageSize).toList();
+
     notifyListeners();
   }
 
-  // ===== Fetch hotel details =====
+  // ---------------------------------------------------------------------------
+  // 📄 PAGINATION
+  // ---------------------------------------------------------------------------
+  void loadMoreHotels() {
+    if (!_hasMore || _isLoading) return;
+
+    final next = _allHotels
+        .where((hotel) {
+      final matchesSearch = hotel.name.toLowerCase().contains(searchQuery);
+      final matchesStars =
+          selectedStars == null || hotel.categoryCode == selectedStars;
+      final matchesDestination =
+          selectedDestination == null ||
+              hotel.destinationName == selectedDestination;
+      return matchesSearch && matchesStars && matchesDestination;
+    })
+        .skip(_currentPage * _pageSize)
+        .take(_pageSize)
+        .toList();
+
+    if (next.isEmpty) {
+      _hasMore = false;
+    } else {
+      _hotels.addAll(next);
+      _currentPage++;
+    }
+
+    notifyListeners();
+  }
+
+  /// Load a specific page index
+  void loadPage(int page) {
+    final start = (page - 1) * _pageSize;
+    final end = start + _pageSize;
+
+    if (start >= _allHotels.length) return;
+
+    _hotels = _allHotels.sublist(
+      start,
+      end > _allHotels.length ? _allHotels.length : end,
+    );
+
+    _currentPage = page;
+    _hasMore = _hotels.length < _allHotels.length;
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // 🌍 FILTER BY DESTINATION CACHE
+  // ---------------------------------------------------------------------------
+  List<Hotel> getHotelsByDestination(String destId) {
+    return _hotelsByDestination[destId] ?? [];
+  }
+
+  void setHotelsByDestination(String? destId) {
+    _hotels = _hotelsByDestination[destId] ?? [];
+    notifyListeners();
+  }
+
+  String? getDestinationIdByCity(String cityName) {
+    try {
+      return _allHotels.firstWhere(
+            (hotel) =>
+        hotel.destinationName?.toLowerCase() == cityName.toLowerCase(),
+      ).destinationId;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 🏨 HOTEL DETAILS
+  // ---------------------------------------------------------------------------
   Future<void> fetchHotelDetail(String slug) async {
     _isLoadingDetail = true;
     _errorDetail = null;
@@ -90,81 +205,46 @@ class HotelProvider with ChangeNotifier {
       if (detail != null) {
         _selectedHotel = detail;
       } else {
-        _errorDetail = "Hotel details not found";
-        _selectedHotel = null;
+        _errorDetail = "Hotel details not found.";
       }
     } catch (e) {
-      _errorDetail = e.toString();
-      _selectedHotel = null;
-      debugPrint("Error fetching hotel detail: $e");
+      _errorDetail = "Error: $e";
     }
 
     _isLoadingDetail = false;
     notifyListeners();
   }
 
-  // ===== Get hotels by destination from cache =====
-  List<Hotel> getHotelsByDestination(String destinationId) {
-    return _hotelsByDestination[destinationId] ?? [];
-  }
-
-  // ===== Clear selected hotel =====
   void clearSelectedHotel() {
     _selectedHotel = null;
     _errorDetail = null;
     notifyListeners();
   }
 
-  // ===== Get destination ID by city name =====
-  String? getDestinationIdByCity(String cityName) {
-    try {
-      return _allHotels.firstWhere(
-            (hotel) => hotel.destinationName?.toLowerCase() == cityName.toLowerCase(),
-      ).destinationId;
-    } catch (e) {
-      return null;
-    }
-  }
-
-
-// 🚀 RESET SEARCH
-  void resetSearch() {
-    _searchResults.clear();
-    _hasMoreSearchResults = true;
-    _isInitialSearchLoading = false;
-    _isLoadingMoreResults = false;
-    notifyListeners();
-  }
-
-  //hotels by state
+  // ---------------------------------------------------------------------------
+  // 🗺 HOTELS BY STATE
+  // ---------------------------------------------------------------------------
   Future<void> fetchHotelsByState(String state) async {
     _isLoading = true;
     _currentState = state;
     notifyListeners();
 
     try {
-      debugPrint("🔍 Fetching hotels for state: '$state'");
       final hotels = await _apiService.getHotelsByState(state);
-      debugPrint("✅ Received ${hotels.length} hotels for state: '$state'");
-
       _hotelsByState[state] = hotels;
       _hotels = hotels;
     } catch (e) {
-      debugPrint("❌ Error fetching hotels by state '$state': $e");
       _hotels = [];
       _hotelsByState[state] = [];
+      debugPrint("❌ Error fetching hotels by state '$state': $e");
     }
 
     _isLoading = false;
     notifyListeners();
   }
 
-
-// hotels by current state
   List<Hotel> getCurrentStateHotels() {
     if (_currentState == null) return [];
     return _hotelsByState[_currentState!] ?? [];
   }
-
-
 }

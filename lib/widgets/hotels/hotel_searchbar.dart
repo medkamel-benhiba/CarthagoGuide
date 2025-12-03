@@ -1,10 +1,19 @@
-import 'package:carthagoguide/constants/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:carthagoguide/constants/theme.dart';
 
 class SearchBarWidget extends StatelessWidget {
   final AppTheme theme;
+  final String hint;
+  final ValueChanged<String>? onChanged;
+  final TextEditingController? controller;
 
-  const SearchBarWidget({super.key, required this.theme});
+  const SearchBarWidget({
+    super.key,
+    required this.theme,
+    this.hint = "Rechercher...",
+    this.onChanged,
+    this.controller,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +31,14 @@ class SearchBarWidget extends StatelessWidget {
         ],
       ),
       child: TextField(
+        controller: controller,
+        onChanged: onChanged,
         decoration: InputDecoration(
-          hintText: "Rechercher par nom...",
-          hintStyle: TextStyle(color: theme.text.withOpacity(0.5), fontSize: 16),
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: theme.text.withOpacity(0.5),
+            fontSize: 16,
+          ),
           border: InputBorder.none,
           icon: Icon(Icons.search, color: theme.primary),
         ),

@@ -90,7 +90,6 @@ class GuestHouseScreen extends StatelessWidget {
                     destination: house["destination"],
                     imgUrl: house["image"],
                     rating: house["rating"],
-                    price: house["price"],
                     // Navigation will go to a placeholder details screen (e.g., GuestHouseDetailsScreen)
                     onTap: () {
                       // Navigator.push(context, MaterialPageRoute(builder: (context) => GuestHouseDetailsScreen(...)));

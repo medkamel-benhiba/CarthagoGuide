@@ -1,4 +1,6 @@
 import 'package:carthagoguide/constants/theme.dart';
+import 'package:carthagoguide/providers/destination_provider.dart';
+import 'package:carthagoguide/providers/hotel_provider.dart';
 import 'package:carthagoguide/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,11 +11,18 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent));
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => DestinationProvider()),
+        ChangeNotifierProvider(create: (_) => HotelProvider()),
+
+
+      ],
       child: const MyApp(),
     ),
   );
+
 }
 
 class MyApp extends StatelessWidget {

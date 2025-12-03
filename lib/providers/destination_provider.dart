@@ -37,6 +37,22 @@ class DestinationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<Destination> get filteredDestinations {
+    if (_searchQuery.isEmpty) return _destinations;
+
+    return _destinations.where((d) {
+      final name = d.name.toLowerCase();
+      final state = d.state.toLowerCase();
+      return name.contains(_searchQuery) || state.contains(_searchQuery);
+    }).toList();
+  }
+
+  String _searchQuery = "";
+  void setSearchQuery(String value) {
+    _searchQuery = value.toLowerCase().trim();
+    notifyListeners();
+  }
+
   /// Get a destination by its ID
   Destination? getDestinationById(String id) {
     try {

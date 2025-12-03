@@ -5,11 +5,14 @@ import 'package:carthagoguide/constants/theme.dart';
 class SectionTitleWidget extends StatelessWidget {
   final String title;
   final AppTheme theme;
+  final bool? showMore;
+
 
   const SectionTitleWidget({
     super.key,
     required this.title,
     required this.theme,
+    this.showMore
   });
 
   @override
@@ -25,6 +28,7 @@ class SectionTitleWidget extends StatelessWidget {
             color: theme.text,
           ),
         ),
+        if(showMore == true)
         Text(
           "Voir Tout",
           style: TextStyle(color: theme.primary, fontWeight: FontWeight.w600),

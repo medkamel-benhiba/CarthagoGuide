@@ -11,32 +11,8 @@ import 'package:carthagoguide/widgets/video_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-final List<Map<String, String>> destinations = [
-  {
-    "name": "Sousse",
-    "image": "assets/images/sousse.jpg",
-  },
-  {
-    "name": "Bizerte",
-    "image": "assets/images/bizerte.jpg",
-  },
-  {
-    "name": "Djerba",
-    "image": "assets/images/djerba.jpg",
-  },
-  {
-    "name": "Sidi Bou Said",
-    "image": "assets/images/sidibou.jpg",
-  },
-  {
-    "name": "Tozeur",
-    "image": "assets/images/tozeur.jpg",
-  },
-  {
-    "name": "Carthage",
-    "image": "assets/images/carthage.jpg",
-  },
-];
+import '../providers/destination_provider.dart';
+
 
 final List<Map<String, dynamic>> experiencesReels = [
   {
@@ -140,6 +116,7 @@ final List<String> galleryImages = [
   "assets/images/sousse.jpg",
 ];
 
+
 class HomeScreen extends StatelessWidget {
   final VoidCallback? onMenuTap;
 
@@ -149,12 +126,14 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
 
+    final destinationProvider = Provider.of<DestinationProvider>(context);
+    final destinations = destinationProvider.destinations;
+
     return Scaffold(
       backgroundColor: theme.background,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // AppBar
           SliverAppBar(
             backgroundColor: theme.background,
             elevation: 0,
@@ -188,33 +167,45 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Search Bar
                   SearchBarWidget(theme: theme),
                   const SizedBox(height: 25),
 
-                  // Menu Icons
                   CategoryRowWidget(theme: theme),
                   const SizedBox(height: 30),
 
-                  // Video
                   VideoBanner(theme: theme),
                   const SizedBox(height: 30),
 
-                  // Destinations
-                  SectionTitleWidget(title: "Destinations", theme: theme),
+                  // ------- DESTINATIONS --------
+                  SectionTitleWidget(title: "Destinations", theme: theme,showMore: true),
                   const SizedBox(height: 15),
-                  _buildHorizontalList(
-                    height: 220,
-                    itemCount: destinations.length,
-                    itemBuilder: (context, index) {
-                      final item = destinations[index];
-                      return DestinationCardWidget(
-                        theme: theme,
-                        title: item["name"]!,
-                        imgUrl: item["image"]!,
-                      );
-                    },
-                  ),
+
+                  if (destinationProvider.isLoading)
+                    Center(
+                        child:
+                        CircularProgressIndicator(color: theme.primary)),
+                  if (destinationProvider.error != null)
+                    Text(
+                      destinationProvider.error!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  if (!destinationProvider.isLoading &&
+                      destinationProvider.error == null)
+                    _buildHorizontalList(
+                      height: 220,
+                      itemCount: destinations.length < 6
+                          ? destinations.length
+                          : 6,
+                      itemBuilder: (context, index) {
+                        final d = destinations[index];
+                        return DestinationCardWidget(
+                          theme: theme,
+                          title: d.name,
+                          imgUrl:
+                          d.gallery.first ?? d.cover ?? "",
+                        );
+                      },
+                    ),
 
                   const SizedBox(height: 30),
 
@@ -224,7 +215,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 30),
 
-                  SectionTitleWidget(title: "Circuits", theme: theme),
+                  SectionTitleWidget(title: "Circuits", theme: theme,showMore: true),
                   const SizedBox(height: 15),
                   _buildHorizontalList(
                     height: 180,
@@ -239,10 +230,10 @@ class HomeScreen extends StatelessWidget {
                       );
                     },
                   ),
+
                   const SizedBox(height: 30),
 
-                  // Events Section
-                  SectionTitleWidget(title: "Événements", theme: theme),
+                  SectionTitleWidget(title: "Événements", theme: theme,showMore: true),
                   const SizedBox(height: 15),
                   _buildHorizontalList(
                     height: 250,
@@ -258,11 +249,10 @@ class HomeScreen extends StatelessWidget {
                       );
                     },
                   ),
+
                   const SizedBox(height: 30),
                   GallerySectionWidget(
-                    theme: theme,
-                    galleryImages: galleryImages,
-                  ),
+                      theme: theme, galleryImages: galleryImages),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -273,6 +263,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // Reusable horizontal list builder
   Widget _buildHorizontalList({
     required double height,
     required int itemCount,

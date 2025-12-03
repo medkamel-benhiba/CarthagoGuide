@@ -4,44 +4,37 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carthagoguide/constants/theme.dart';
 import 'package:carthagoguide/widgets/hotels/hotel_card.dart';
-
+import 'package:carthagoguide/providers/hotel_provider.dart';
+import 'package:carthagoguide/providers/destination_provider.dart';
 import '../widgets/hotels/hotel_searchbar.dart';
 
-final List<Map<String, dynamic>> hotels = [
-  {
-    "title": "Hôtel Joya Paradise & SPA Djerba",
-    "destination": "Djerba",
-    "image": "assets/images/joya1.jpg",
-    "rating": 4.0,
-    "price": 180,
-  },
-  {
-    "title": "Desert Dreams Resort",
-    "destination": "Tozeur",
-    "image": "assets/images/circuit3.jpg",
-    "rating": 4.0,
-    "price": 120,
-  },
-  {
-    "title": "Sidi Bou Said Boutique Stay",
-    "destination": "Sidi Bou Said",
-    "image": "assets/images/sidibou.jpg",
-    "rating": 5.0,
-    "price": 250,
-  },
-  {
-    "title": "Bizerte Sea View Hotel",
-    "destination": "Bizerte",
-    "image": "assets/images/bizerte.jpg",
-    "rating": 4.0,
-    "price": 95,
-  },
-];
-
-class HotelsScreen extends StatelessWidget {
+class HotelsScreen extends StatefulWidget {
   final VoidCallback? onMenuTap;
 
   const HotelsScreen({super.key, this.onMenuTap});
+
+  @override
+  State<HotelsScreen> createState() => _HotelsScreenState();
+}
+
+class _HotelsScreenState extends State<HotelsScreen> {
+  int _currentPage = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch hotels once
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<HotelProvider>(context, listen: false).fetchAllHotels();
+      Provider.of<DestinationProvider>(context, listen: false)
+          .fetchDestinations();
+    });
+  }
+
+  void _goToPage(int page, HotelProvider hotelProvider) {
+    setState(() => _currentPage = page);
+    hotelProvider.loadPage(page);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +45,9 @@ class HotelsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: theme.background,
         elevation: 0,
-        // iconTheme: IconThemeData(color: theme.text), // Remove this line as we're overriding 'leading'
-        leading: IconButton( // Add this leading button
+        leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: theme.text),
-          onPressed: onMenuTap, // Use the callback
+          onPressed: widget.onMenuTap,
         ),
         title: Text(
           "Hôtels",
@@ -63,69 +55,126 @@ class HotelsScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SearchBarWidget(theme: theme),
-              const SizedBox(height: 25),
-              FilterSection(theme: theme, type: FilterType.hotel),
-              const SizedBox(height: 25),
-              Text(
-                "Résultats (${hotels.length})",
-                style: TextStyle(
-                  color: theme.text.withOpacity(0.6),
-                  fontWeight: FontWeight.w300,
-                  fontSize: 16,
-                ),
+      body: Consumer2<HotelProvider, DestinationProvider>(
+        builder: (context, hotelProvider, destinationProvider, child) {
+          final hotelsList = hotelProvider.hotels;
+
+          // If you still want pagination:
+          final int pageSize = hotelProvider.pageSize; // must exist in provider
+          final int totalPages =
+          (hotelProvider.allHotels.length / pageSize).ceil();
+
+          if (hotelProvider.isLoading && hotelsList.isEmpty) {
+            return Center(
+              child: CircularProgressIndicator(color: theme.primary),
+            );
+          }
+
+          if (hotelsList.isEmpty && !hotelProvider.isLoading) {
+            return Center(
+              child: Text(
+                "Aucun hôtel trouvé.",
+                style: TextStyle(color: theme.text.withOpacity(0.7)),
               ),
-              const SizedBox(height: 15),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: hotels.length,
-                itemBuilder: (context, index) {
-                  final hotel = hotels[index];
-                  return HotelCardWidget(
-                    theme: theme,
-                    title: hotel["title"],
-                    destination: hotel["destination"],
-                    imgUrl: hotel["image"],
-                    rating: hotel["rating"],
-                    price: hotel["price"],
-                    // ⭐️ NEW: Pass the navigation logic to the card's onTap
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HotelDetailsScreen(
-                            title: hotel["title"],
-                            destination: hotel["destination"],
-                            imgUrl: hotel["image"],
-                            rating: hotel["rating"],
-                            price: hotel["price"].toDouble(), // Ensure price is double for details screen
-                          ),
-                        ),
+            );
+          }
+
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SearchBarWidget(theme: theme, onChanged: (value) {
+                    hotelProvider.setSearchQuery(value);
+                  }),
+                  const SizedBox(height: 25),
+
+                  FilterSection(theme: theme, type: FilterType.hotel),
+
+                  const SizedBox(height: 25),
+
+                  Text(
+                    "Résultats (${hotelsList.length})",
+                    style: TextStyle(
+                      color: theme.text.withOpacity(0.6),
+                      fontWeight: FontWeight.w300,
+                      fontSize: 16,
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: hotelsList.length,
+                    itemBuilder: (context, index) {
+                      final hotel = hotelsList[index];
+
+                      return HotelCardWidget(
+                        theme: theme,
+                        title: hotel.name,
+                        destination:
+                        hotel.destinationName ?? "Destination inconnue",
+                        imgUrl: hotel.images?.first ??
+                            hotel.cover ??
+                            "assets/images/placeholder.jpg",
+                        rating: hotel.categoryCode?.toDouble() ?? 3.0,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  HotelDetailsScreen(hotel: hotel),
+                            ),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
-              Center(
-                child: TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    "Afficher plus d'hôtels",
-                    style: TextStyle(color: theme.primary),
                   ),
-                ),
+
+                  // 🔵 PAGINATION (only if you want it)
+                  if (totalPages > 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: List.generate(totalPages, (index) {
+                            final page = index + 1;
+                            final isSelected = _currentPage == page;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isSelected
+                                      ? theme.primary
+                                      : theme.primary.withOpacity(0.3),
+                                  minimumSize: const Size(40, 40),
+                                  padding: EdgeInsets.zero,
+                                ),
+                                onPressed: () => _goToPage(page, hotelProvider),
+                                child: Text(
+                                  page.toString(),
+                                  style: TextStyle(
+                                    color:
+                                    isSelected ? Colors.white : theme.text,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

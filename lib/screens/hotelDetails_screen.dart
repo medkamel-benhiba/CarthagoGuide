@@ -1,31 +1,17 @@
 import 'package:carthagoguide/constants/theme.dart';
+import 'package:carthagoguide/models/hotel.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
-
-// Dummy data for the gallery section
-const List<String> dummyGalleryImages = [
-  "assets/images/joya1.jpg",
-  "assets/images/joya2.jpg",
-  "assets/images/joya3.jpg",
-  "assets/images/joya4.jpg",
-];
+import 'package:cached_network_image/cached_network_image.dart';
 
 class HotelDetailsScreen extends StatefulWidget {
-  final String title;
-  final String destination;
-  final String imgUrl; // Used here for the video path
-  final double rating;
-  final double price;
+  final Hotel hotel;
 
   const HotelDetailsScreen({
     super.key,
-    required this.title,
-    required this.destination,
-    required this.imgUrl,
-    required this.rating,
-    required this.price,
+    required this.hotel
   });
 
   @override
@@ -34,19 +20,18 @@ class HotelDetailsScreen extends StatefulWidget {
 
 class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
   late VideoPlayerController _videoController;
-  final String videoAssetPath = "assets/videos/joya.mp4";
 
   @override
   void initState() {
     super.initState();
-    _videoController = VideoPlayerController.asset(videoAssetPath)
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(widget.hotel.video_link))
       ..initialize().then((_) {
         setState(() {});
         _videoController.play();
         _videoController.setLooping(true);
         _videoController.setVolume(0.0);
       }).catchError((e) {
-        print("Error initializing video: $e");
+        debugPrint("Error initializing network video: $e");
       });
   }
 
@@ -56,8 +41,25 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
     super.dispose();
   }
 
-  // Helper method to build the star rating string (e.g., ★★★☆☆)
-  String _buildStarRating(double rating) {
+  String _stripHtmlTags(String htmlText) {
+    if (htmlText.isEmpty) return '';
+
+    final RegExp exp = RegExp(r"<[^>]*>", multiLine: true);
+    String plainText = htmlText.replaceAll(exp, '');
+    plainText = plainText
+        .replaceAll(RegExp(r'&[a-z]+;'), ' ')
+        .replaceAll('\r\n', ' ')
+        .replaceAll('\n', ' ')
+        .replaceAll('\t', ' ')
+        .replaceAll(' ', ' ')
+        .replaceAll(RegExp(r' {2,}'), ' ')
+        .trim();
+
+    return plainText;
+  }
+
+
+  String _buildStarRating(int rating) {
     int count = rating.round().clamp(1, 5);
     return List.generate(count, (_) => '★').join() +
         List.generate(5 - count, (_) => '☆').join();
@@ -72,11 +74,11 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
       backgroundColor: theme.background,
       body: Stack(
         children: [
-          // --- 1. Background Video (Hero Section) ---
           Container(
             height: size.height * 0.45,
-            color: Colors.black, // Background color while video loads
-            child: _videoController.value.isInitialized
+            color: Colors.black,
+            child: (widget.hotel.video_link.isNotEmpty)
+                ? (_videoController.value.isInitialized
                 ? SizedBox.expand(
               child: FittedBox(
                 fit: BoxFit.cover,
@@ -87,38 +89,46 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 ),
               ),
             )
-                : const Center(child: CircularProgressIndicator(color: Colors.white)),
+                : const Center(child: CircularProgressIndicator(color: Colors.white)))
+                : (widget.hotel.images != null && widget.hotel.images!.isNotEmpty
+                ? ClipRRect(
+              borderRadius: BorderRadius.circular(0),
+              child: Image.network(
+                widget.hotel.images!.first,
+                width: double.infinity,
+                height: size.height * 0.45,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                const Center(child: Icon(Icons.broken_image, size: 40)),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator(color: Colors.white));
+                },
+              ),
+            )
+                : const SizedBox.shrink()),
           ),
 
-          // --- 2. Floating Action Buttons and Back Button ---
+
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Back Button
                   _DetailActionButton(
                     icon: Icons.arrow_back_ios_new_rounded,
                     onTap: () => Navigator.pop(context),
                   ),
-                  /*// Favorite Button
-                  _DetailActionButton(
-                    icon: Icons.favorite_border,
-                    onTap: () {
-                      // Handle favorite toggle
-                    },
-                  ),*/
                 ],
               ),
             ),
           ),
 
-          // --- 3. Hotel Details Card (Scrollable Content) ---
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              height: size.height * 0.65,
+              height: size.height * 0.60,
               decoration: BoxDecoration(
                 color: theme.background,
                 borderRadius: const BorderRadius.only(
@@ -128,17 +138,16 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
               ),
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(top: 30, left: 20, right: 20, bottom: 100),
+                padding: const EdgeInsets.only(top: 30, left: 20, right: 20, bottom: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title and Rating Number
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Text(
-                            widget.title,
+                            widget.hotel.name,
                             style: TextStyle(
                               color: theme.text,
                               fontSize: 28,
@@ -146,28 +155,12 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                             ),
                           ),
                         ),
-                        // Displaying Rating number
-                        /*Row(
-                          children: [
-                            Icon(Icons.star_rounded, color: Colors.amber, size: 24),
-                            const SizedBox(width: 5),
-                            Text(
-                              widget.rating.toStringAsFixed(1),
-                              style: TextStyle(
-                                color: theme.text,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),*/
                       ],
                     ),
                     const SizedBox(height: 5),
 
-                    // Stars Rating (e.g., *****)
                     Text(
-                      _buildStarRating(widget.rating),
+                      _buildStarRating(widget.hotel.categoryCode  ?? 0),
                       style: const TextStyle(
                         color: Colors.amber,
                         fontSize: 22,
@@ -182,7 +175,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                         Icon(Icons.location_on, color: theme.text, size: 18),
                         const SizedBox(width: 5),
                         Text(
-                          widget.destination,
+                          widget.hotel.destinationName??"",
                           style: TextStyle(
                             color: theme.text,
                             fontSize: 16,
@@ -194,11 +187,10 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                     const SizedBox(height: 30),
 
                     // Gallery Section
-                    _GallerySection(theme: theme),
+                    _GallerySection(theme: theme, galleryImages: widget.hotel.images ?? []),
 
                     const SizedBox(height: 30),
 
-                    // Facilities Section
                     Text(
                       "Équipements",
                       style: TextStyle(
@@ -209,7 +201,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    // Facilities List
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
@@ -233,7 +224,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      "Le ${widget.title} offre une expérience de luxe inégalée. Situé à ${widget.destination}, il combine l'élégance moderne avec le charme local. Profitez de nos chambres spacieuses, d'un service exceptionnel et d'une vue imprenable. Idéal pour une escapade relaxante ou un voyage d'affaires.",
+                      _stripHtmlTags(widget.hotel.description??""),
                       style: TextStyle(
                         color: theme.text,
                         fontSize: 16,
@@ -244,80 +235,20 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                     const SizedBox(height: 30),
 
                     // Contact Information
-                    _ContactSection(theme: theme),
+                    _ContactSection(theme: theme,hotel: widget.hotel),
+
                   ],
                 ),
               ),
             ),
           ),
 
-          /*// --- 4. Fixed Bottom Bar (Price and Booking) ---
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              decoration: BoxDecoration(
-                color: theme.background,
-                border: Border(
-                  top: BorderSide(color: theme.text.withOpacity(0.1), width: 1),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "À partir de",
-                        style: TextStyle(
-                          color: theme.text.withOpacity(0.7), // Use reduced opacity for label
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        "${widget.price.toStringAsFixed(0)} TND / Nuit",
-                        style: TextStyle(
-                          color: theme.text,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Booking Button
-                  /*ElevatedButton(
-                    onPressed: () {
-                      // Handle booking action
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: const Text(
-                      "Réserver",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),*/
-                ],
-              ),
-            ),
-          ),*/
         ],
       ),
     );
   }
 }
 
-// --- REUSABLE WIDGETS ---
 
 class _DetailActionButton extends StatelessWidget {
   final IconData icon;
@@ -371,8 +302,10 @@ class _FacilityItem extends StatelessWidget {
 }
 
 class _GallerySection extends StatelessWidget {
-  final AppTheme theme; // Using AppTheme as per your code
-  const _GallerySection({required this.theme});
+  final AppTheme theme;
+  final List<String> galleryImages;
+
+  const _GallerySection({required this.theme, required this.galleryImages});
 
   @override
   Widget build(BuildContext context) {
@@ -392,17 +325,19 @@ class _GallerySection extends StatelessWidget {
           height: 120,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: dummyGalleryImages.length,
+            itemCount: galleryImages.length,
             itemBuilder: (context, index) {
               return Container(
-                margin: EdgeInsets.only(right: index < dummyGalleryImages.length - 1 ? 15 : 0),
+                margin: EdgeInsets.only(right: index < galleryImages.length - 1 ? 15 : 0),
                 width: 120,
                 height: 120,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15),
-                  child: Image.asset(
-                    dummyGalleryImages[index],
+                  child: CachedNetworkImage(
+                    imageUrl: galleryImages[index],
                     fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 40),
                   ),
                 ),
               );
@@ -416,14 +351,11 @@ class _GallerySection extends StatelessWidget {
 
 class _ContactSection extends StatelessWidget {
   final AppTheme theme;
-  const _ContactSection({required this.theme});
+  final Hotel hotel;
+  const _ContactSection({required this.theme,required this.hotel});
 
   @override
   Widget build(BuildContext context) {
-    // Dummy Contact Data
-    const String mail = "resa.joya@topnet.tn";
-    const String phone = "+216 75 730 352";
-    const String address = "Zone Touristique BP 357 - 4116 Djerba Midoun";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,20 +371,20 @@ class _ContactSection extends StatelessWidget {
         const SizedBox(height: 10),
 
         // Mail
-        _ContactDetailRow(theme: theme, icon: Icons.email_outlined, text: mail, isLink: true),
+        _ContactDetailRow(theme: theme, icon: Icons.email_outlined, text: hotel.email??"", isLink: true),
 
         // Phone
-        _ContactDetailRow(theme: theme, icon: Icons.phone_outlined, text: phone, isLink: true),
+        _ContactDetailRow(theme: theme, icon: Icons.phone_outlined, text: hotel.phone, isLink: true),
 
         // Address
-        _ContactDetailRow(theme: theme, icon: Icons.location_on_outlined, text: address, isLink: false),
+        _ContactDetailRow(theme: theme, icon: Icons.location_on_outlined, text: hotel.address, isLink: false),
       ],
     );
   }
 }
 
 class _ContactDetailRow extends StatelessWidget {
-  final AppTheme theme; // Using AppTheme as per your code
+  final AppTheme theme;
   final IconData icon;
   final String text;
   final bool isLink;

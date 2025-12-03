@@ -40,7 +40,7 @@ class HotelDetail {
   final List<dynamic> options;
   final bool reservable;
   final List<Bio> bios;
-  final List<dynamic> cancellations; // Empty in sample
+  final List<dynamic> cancellations;
   final List<ReleaseHotel> releaseHotels;
   final List<FlashSale> flashSales;
   final List<MinimumStay> minimumstay;

@@ -3,6 +3,9 @@ import 'dart:ui';
 class Hotel {
   final String id;
   final String id_hotel_bbx;
+  final String email;
+  final String phone;
+
 
   final String name;
   final String name_en;
@@ -22,6 +25,7 @@ class Hotel {
 
   final String cover;
   final List<String>? images;
+  final String video_link;
   final bool reservable;
   final String slug;
   final String lat;
@@ -45,6 +49,8 @@ class Hotel {
   Hotel({
     required this.id,
     required this.id_hotel_bbx,
+    required this.email,
+    required this.phone,
     required this.name,
     required this.name_en,
     required this.name_ar,
@@ -55,6 +61,7 @@ class Hotel {
     required this.address,
     required this.cover,
     required this.images,
+    required this.video_link,
     required this.lat,
     required this.lng,
     required this.reservable,
@@ -87,6 +94,8 @@ class Hotel {
     return Hotel(
       id: json['id'] ?? '',
       id_hotel_bbx: json['id_hotel_bbx'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
       name: json['name'] ?? '',
       name_en: json['name_en'] ?? '',
       name_ar: json['name_ar'] ?? '',
@@ -107,6 +116,7 @@ class Hotel {
       images: json['images'] != null
           ? List<String>.from(json['images'])
           : [],
+      video_link: json['video_link']??'',
       lat: json['lat'] ?? '',
       lng: json['lng'] ?? '',
 
@@ -135,6 +145,8 @@ class Hotel {
     return {
       'id': id,
       'id_hotel_bbx': id_hotel_bbx,
+      'email': email,
+      'phone': phone,
       'name': name,
       'address': address,
       'cover': cover,

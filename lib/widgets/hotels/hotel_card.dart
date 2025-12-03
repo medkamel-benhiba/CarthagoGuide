@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:carthagoguide/constants/theme.dart';
 
@@ -7,7 +8,6 @@ class HotelCardWidget extends StatelessWidget {
   final String destination;
   final String imgUrl;
   final double rating;
-  final int price;
 
   final VoidCallback onTap;
 
@@ -18,7 +18,6 @@ class HotelCardWidget extends StatelessWidget {
     required this.destination,
     required this.imgUrl,
     required this.rating,
-    required this.price,
     required this.onTap,
   });
 
@@ -51,19 +50,42 @@ class HotelCardWidget extends StatelessWidget {
         child: Stack(
           children: [
             // 1. Background image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(borderRadius),
-              child: Image.asset(
-                imgUrl,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, url, error) => Container(
-                  color: Colors.grey[200],
-                  child: const Center(
-                    child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+            CachedNetworkImage(
+              imageUrl: imgUrl,
+              imageBuilder: (context, imageProvider) => Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: DecorationImage(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
                   ),
                 ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.center,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(15),
+
+                ),
+              ),
+              placeholder: (context, url) => Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+              errorWidget: (context, url, error) => Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
               ),
             ),
 
