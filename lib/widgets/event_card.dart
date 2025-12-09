@@ -1,5 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
 
 class EventCardWidget extends StatelessWidget {
   final AppTheme theme;
@@ -8,7 +9,7 @@ class EventCardWidget extends StatelessWidget {
   final String date;
   final String imgUrl;
   final VoidCallback? onTap;
-  final bool fullWidth; // true = stretch full width, false = fixed width
+  final bool fullWidth;
 
   const EventCardWidget({
     super.key,
@@ -23,59 +24,73 @@ class EventCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double cardWidth = fullWidth
-        ? double.infinity
-        : 250;
+    const double cardRadius = 20;
+
+    double cardWidth = fullWidth ? double.infinity : 250;
 
     return Container(
       width: cardWidth,
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
+        borderRadius: BorderRadius.circular(cardRadius),
         child: Stack(
           children: [
-            // Main card container
             Container(
               decoration: BoxDecoration(
                 color: theme.surface,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(cardRadius),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Image with gradient
-                  AspectRatio(
-                    aspectRatio: fullWidth ? 1.8 : 2.2,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(20),
-                        ),
-                        image: DecorationImage(
-                          image: AssetImage(imgUrl),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(20),
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(cardRadius),
+                    ),
+                    child: AspectRatio(
+                      aspectRatio: fullWidth ? 1.8 : 2.2,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl: imgUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: Colors.grey.shade300,
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: Colors.grey.shade300,
+                              child: const Icon(
+                                Icons.broken_image,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ),
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.black.withOpacity(0.4),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.center,
+
+                          // Gradient overlay
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.black.withOpacity(0.6),
+                                  Colors.transparent,
+                                ],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.center,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
 
-                  // Text section
+                  // TEXT CONTENT
                   Padding(
                     padding: const EdgeInsets.fromLTRB(15, 12, 15, 15),
                     child: Column(
@@ -120,13 +135,13 @@ class EventCardWidget extends StatelessWidget {
               ),
             ),
 
-            // Date badge
+            // DATE BADGE
             Positioned(
               top: 15,
               right: 15,
               child: Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: theme.primary,
                   borderRadius: BorderRadius.circular(10),

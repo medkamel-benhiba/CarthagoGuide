@@ -10,6 +10,8 @@ class Activity {
   final String? titleKo;
   final String? titleJa;
   final String? cover;
+  final String? vignette;
+  final String? phone;
   final String? description;
   final String? descriptionEn;
   final String? descriptionAr;
@@ -56,6 +58,8 @@ class Activity {
     this.titleKo,
     this.titleJa,
     this.cover,
+    this.vignette,
+    this.phone,
     this.description,
     this.descriptionEn,
     this.descriptionAr,
@@ -103,6 +107,8 @@ class Activity {
       titleKo: json['title_ko'],
       titleJa: json['title_ja'],
       cover: json['cover'],
+      vignette: json['vignette'],
+      phone: json['phone'],
       description: json['description'],
       descriptionEn: json['description_en'],
       descriptionAr: json['description_ar'],

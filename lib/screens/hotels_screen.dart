@@ -1,12 +1,14 @@
-import 'package:carthagoguide/screens/hotelDetails_screen.dart';
-import 'package:carthagoguide/widgets/hotels/filters/filter_section.dart';
+import 'package:CarthagoGuide/screens/hotelDetails_screen.dart';
+import 'package:CarthagoGuide/widgets/hotels/filters/filter_section.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:carthagoguide/constants/theme.dart';
-import 'package:carthagoguide/widgets/hotels/hotel_card.dart';
-import 'package:carthagoguide/providers/hotel_provider.dart';
-import 'package:carthagoguide/providers/destination_provider.dart';
-import '../widgets/hotels/hotel_searchbar.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/widgets/hotels/hotel_card.dart';
+import 'package:CarthagoGuide/providers/hotel_provider.dart';
+import 'package:CarthagoGuide/providers/destination_provider.dart';
+import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
+import 'package:CarthagoGuide/widgets/skeleton_box.dart';
+
 
 class HotelsScreen extends StatefulWidget {
   final VoidCallback? onMenuTap;
@@ -20,20 +22,59 @@ class HotelsScreen extends StatefulWidget {
 class _HotelsScreenState extends State<HotelsScreen> {
   int _currentPage = 1;
 
-  @override
-  void initState() {
-    super.initState();
-    // Fetch hotels once
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<HotelProvider>(context, listen: false).fetchAllHotels();
-      Provider.of<DestinationProvider>(context, listen: false)
-          .fetchDestinations();
-    });
-  }
-
   void _goToPage(int page, HotelProvider hotelProvider) {
     setState(() => _currentPage = page);
     hotelProvider.loadPage(page);
+  }
+
+  Widget _buildHotelsSkeletonList(AppTheme theme) {
+    Widget cardSkeleton = Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image Placeholder
+          SkeletonBox(
+            theme: theme,
+            width: double.infinity,
+            height: 180,
+            radius: 15,
+          ),
+          const SizedBox(height: 10),
+          // Title Line
+          SkeletonBox(
+            theme: theme,
+            width: double.infinity,
+            height: 20,
+            radius: 4,
+          ),
+          const SizedBox(height: 8),
+          SkeletonBox(
+            theme: theme,
+            width: 150,
+            height: 16,
+            radius: 4,
+          ),
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SkeletonBox(theme: theme, width: 120, height: 16, radius: 4),
+        ),
+        const SizedBox(height: 15),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: 5,
+          itemBuilder: (context, index) => cardSkeleton,
+        ),
+      ],
+    );
   }
 
   @override
@@ -59,119 +100,127 @@ class _HotelsScreenState extends State<HotelsScreen> {
         builder: (context, hotelProvider, destinationProvider, child) {
           final hotelsList = hotelProvider.hotels;
 
-          // If you still want pagination:
-          final int pageSize = hotelProvider.pageSize; // must exist in provider
+          final int pageSize = hotelProvider.pageSize;
           final int totalPages =
-          (hotelProvider.allHotels.length / pageSize).ceil();
+          (hotelProvider.currentlyFilteredHotels.length / pageSize).ceil();
 
-          if (hotelProvider.isLoading && hotelsList.isEmpty) {
-            return Center(
-              child: CircularProgressIndicator(color: theme.primary),
-            );
-          }
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                SearchBarWidget(theme: theme, onChanged: (value) {
+                  hotelProvider.setSearchQuery(value);
+                }),
+                const SizedBox(height: 25),
 
-          if (hotelsList.isEmpty && !hotelProvider.isLoading) {
-            return Center(
-              child: Text(
-                "Aucun hôtel trouvé.",
-                style: TextStyle(color: theme.text.withOpacity(0.7)),
-              ),
-            );
-          }
+                FilterSection(theme: theme, type: FilterType.hotel),
 
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SearchBarWidget(theme: theme, onChanged: (value) {
-                    hotelProvider.setSearchQuery(value);
-                  }),
-                  const SizedBox(height: 25),
+                const SizedBox(height: 25),
 
-                  FilterSection(theme: theme, type: FilterType.hotel),
-
-                  const SizedBox(height: 25),
-
-                  Text(
-                    "Résultats (${hotelsList.length})",
-                    style: TextStyle(
-                      color: theme.text.withOpacity(0.6),
-                      fontWeight: FontWeight.w300,
-                      fontSize: 16,
-                    ),
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: hotelsList.length,
-                    itemBuilder: (context, index) {
-                      final hotel = hotelsList[index];
-
-                      return HotelCardWidget(
-                        theme: theme,
-                        title: hotel.name,
-                        destination:
-                        hotel.destinationName ?? "Destination inconnue",
-                        imgUrl: hotel.images?.first ??
-                            hotel.cover ??
-                            "assets/images/placeholder.jpg",
-                        rating: hotel.categoryCode?.toDouble() ?? 3.0,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  HotelDetailsScreen(hotel: hotel),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (hotelProvider.isLoading && hotelsList.isEmpty)
+                          _buildHotelsSkeletonList(theme)
+                        else if (hotelsList.isEmpty && !hotelProvider.isLoading)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 50.0),
+                              child: Text(
+                                "Aucun hôtel trouvé.",
+                                style: TextStyle(color: theme.text.withOpacity(0.7)),
+                              ),
                             ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                          )
+                        else ...[
+                            Text(
+                              "Résultats (${hotelProvider.currentlyFilteredHotels.length})",
+                              style: TextStyle(
+                                color: theme.text.withOpacity(0.6),
+                                fontWeight: FontWeight.w300,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 15),
 
-                  // 🔵 PAGINATION (only if you want it)
-                  if (totalPages > 1)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: List.generate(totalPages, (index) {
-                            final page = index + 1;
-                            final isSelected = _currentPage == page;
+                            // 🏨 Hotel List
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: hotelsList.length,
+                              itemBuilder: (context, index) {
+                                final hotel = hotelsList[index];
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isSelected
-                                      ? theme.primary
-                                      : theme.primary.withOpacity(0.3),
-                                  minimumSize: const Size(40, 40),
-                                  padding: EdgeInsets.zero,
-                                ),
-                                onPressed: () => _goToPage(page, hotelProvider),
-                                child: Text(
-                                  page.toString(),
-                                  style: TextStyle(
-                                    color:
-                                    isSelected ? Colors.white : theme.text,
+                                return HotelCardWidget(
+                                  theme: theme,
+                                  title: hotel.name,
+                                  destination:
+                                  hotel.destinationName ?? "Destination inconnue",
+                                  imgUrl: hotel.images?.first ??
+                                      hotel.cover ??
+                                      "assets/images/placeholder.jpg",
+                                  rating: hotel.categoryCode?.toDouble() ?? 4.0,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            HotelDetailsScreen(hotel: hotel),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+
+                            // 🔵 PAGINATION
+                            if (totalPages > 1)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 15),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: List.generate(totalPages, (index) {
+                                      final page = index + 1;
+                                      final isSelected =
+                                          hotelProvider.hotels.isNotEmpty && _currentPage == page;
+
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: isSelected
+                                                ? theme.primary
+                                                : theme.primary.withOpacity(0.3),
+                                            minimumSize: const Size(40, 40),
+                                            padding: EdgeInsets.zero,
+                                          ),
+                                          onPressed: () => _goToPage(page, hotelProvider),
+                                          child: Text(
+                                            page.toString(),
+                                            style: TextStyle(
+                                              color:
+                                              isSelected ? Colors.white : theme.text,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }),
                                   ),
                                 ),
                               ),
-                            );
-                          }),
-                        ),
-                      ),
+                          ],
+                        SizedBox(height: 10)
+                      ],
                     ),
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
           );
         },

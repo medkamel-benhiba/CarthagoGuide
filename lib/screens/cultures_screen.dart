@@ -1,9 +1,8 @@
-import 'package:carthagoguide/constants/theme.dart';
-import 'package:carthagoguide/screens/home_screen.dart';
-import 'package:carthagoguide/widgets/gallery_section.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/screens/home_screen.dart';
+import 'package:CarthagoGuide/widgets/gallery_section.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
 class CulturesScreen extends StatelessWidget {
@@ -23,7 +22,7 @@ class CulturesScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.background,
       appBar: AppBar(
         backgroundColor: theme.background,
         elevation: 0,
@@ -54,13 +53,12 @@ class CulturesScreen extends StatelessWidget {
 */
             const SizedBox(height: 16),
 
-            // Carousel Slider
             CarouselSlider(
               options: CarouselOptions(
                 autoPlay: true,
                 enlargeCenterPage: true,
                 height: 200,
-                viewportFraction: 0.75,
+                viewportFraction: 0.78,
               ),
               items: categories.map((item) {
                 return Builder(
@@ -132,9 +130,7 @@ class CulturesScreen extends StatelessWidget {
                   theme: theme,
                   galleryImages: galleryImages,
                 ),
-
             ),
-
           ],
         ),
       ),

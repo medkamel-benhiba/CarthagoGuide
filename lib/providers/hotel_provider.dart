@@ -17,9 +17,17 @@ class HotelProvider with ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  String? _selectedDestinationId;
+  String? get selectedDestinationId => _selectedDestinationId;
+
+
   /// Pagination
   int _pageSize = 10;
   int get pageSize => _pageSize;
+
+  /// Hotels matching all active filters
+  List<Hotel> _currentlyFilteredHotels = [];
+  List<Hotel> get currentlyFilteredHotels => _currentlyFilteredHotels;
 
   int _currentPage = 1;
   bool _hasMore = true;
@@ -62,14 +70,18 @@ class HotelProvider with ChangeNotifier {
     try {
       _allHotels = await _apiService.gethotels();
 
+      // Set initial filtered list to all hotels
+      _currentlyFilteredHotels = _allHotels;
+
       // First page
-      _hotels = _allHotels.take(_pageSize).toList();
+      _hotels = _currentlyFilteredHotels.take(_pageSize).toList();
 
       _currentPage = 1;
-      _hasMore = _hotels.length < _allHotels.length;
+      _hasMore = _hotels.length < _currentlyFilteredHotels.length;
 
     } catch (e) {
       _allHotels = [];
+      _currentlyFilteredHotels = []; // Must clear this too
       _hotels = [];
       debugPrint("❌ Error fetching hotels: $e");
     }
@@ -96,9 +108,15 @@ class HotelProvider with ChangeNotifier {
     applyFilters();
   }
 
-  /// Apply search + stars + destination
+  void filterByDestination(String destinationId) {
+    _selectedDestinationId = destinationId;
+    applyFilters();
+  }
+
+
+  // Apply search + stars + destination
   void applyFilters() {
-    List<Hotel> filtered = _allHotels.where((hotel) {
+    _currentlyFilteredHotels = _allHotels.where((hotel) {
       final matchesSearch = hotel.name.toLowerCase().contains(searchQuery) ||
           (hotel.destinationName?.toLowerCase().contains(searchQuery) ?? false);
 
@@ -106,20 +124,37 @@ class HotelProvider with ChangeNotifier {
           selectedStars == null ||
               (hotel.categoryCode?.toInt() ?? 0) == selectedStars;
 
+      // 🔥 Correction ici : utiliser _selectedDestinationId si défini
+      final matchesDestinationId =
+          _selectedDestinationId == null ||
+              hotel.destinationId == _selectedDestinationId;
+
       final matchesDestination =
           selectedDestination == null ||
               hotel.destinationName == selectedDestination;
 
-      return matchesSearch && matchesStars && matchesDestination;
+      return matchesSearch &&
+          matchesStars &&
+          matchesDestination &&
+          matchesDestinationId;
     }).toList();
 
-    // Reset pagination after filters
     _currentPage = 1;
-    _hasMore = filtered.length > _pageSize;
+    _hasMore = _currentlyFilteredHotels.length > _pageSize;
 
-    _hotels = filtered.take(_pageSize).toList();
+    _hotels = _currentlyFilteredHotels.take(_pageSize).toList();
 
     notifyListeners();
+  }
+
+
+  /// Add a method to reinitialize filters
+  void clearFilters() {
+    selectedStars = null;
+    selectedDestination = null;
+    _selectedDestinationId = null;
+    searchQuery = "";
+    applyFilters();
   }
 
   // ---------------------------------------------------------------------------
@@ -128,16 +163,8 @@ class HotelProvider with ChangeNotifier {
   void loadMoreHotels() {
     if (!_hasMore || _isLoading) return;
 
-    final next = _allHotels
-        .where((hotel) {
-      final matchesSearch = hotel.name.toLowerCase().contains(searchQuery);
-      final matchesStars =
-          selectedStars == null || hotel.categoryCode == selectedStars;
-      final matchesDestination =
-          selectedDestination == null ||
-              hotel.destinationName == selectedDestination;
-      return matchesSearch && matchesStars && matchesDestination;
-    })
+    // Load more from the CURRENTLY FILTERED list
+    final next = _currentlyFilteredHotels
         .skip(_currentPage * _pageSize)
         .take(_pageSize)
         .toList();
@@ -155,17 +182,21 @@ class HotelProvider with ChangeNotifier {
   /// Load a specific page index
   void loadPage(int page) {
     final start = (page - 1) * _pageSize;
+    // Use the currently filtered list length for bounds
+    final filteredLength = _currentlyFilteredHotels.length;
+
+    if (start >= filteredLength) return;
+
     final end = start + _pageSize;
 
-    if (start >= _allHotels.length) return;
-
-    _hotels = _allHotels.sublist(
+    // Load from the currently filtered list
+    _hotels = _currentlyFilteredHotels.sublist(
       start,
-      end > _allHotels.length ? _allHotels.length : end,
+      end > filteredLength ? filteredLength : end,
     );
 
     _currentPage = page;
-    _hasMore = _hotels.length < _allHotels.length;
+    _hasMore = _hotels.length < filteredLength;
     notifyListeners();
   }
 
@@ -173,7 +204,9 @@ class HotelProvider with ChangeNotifier {
   // 🌍 FILTER BY DESTINATION CACHE
   // ---------------------------------------------------------------------------
   List<Hotel> getHotelsByDestination(String destId) {
+    print("hotels by destinations : $destId ");
     return _hotelsByDestination[destId] ?? [];
+
   }
 
   void setHotelsByDestination(String? destId) {

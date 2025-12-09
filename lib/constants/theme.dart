@@ -55,7 +55,6 @@ class ThemeProvider with ChangeNotifier {
       isSpec: true,
 
     ),
-    // Theme 3: Midnight Violet
     AppTheme(
       primary: const Color(0xFF8B5CF6),
       secondary: const Color(0xFF201826),

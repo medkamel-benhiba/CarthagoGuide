@@ -1,9 +1,9 @@
-import 'package:carthagoguide/widgets/gallery_images.dart';
-import 'package:carthagoguide/widgets/section_title.dart';
+import 'package:CarthagoGuide/widgets/gallery_images.dart';
+import 'package:CarthagoGuide/widgets/section_title.dart';
 import 'package:flutter/material.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
 
-class GallerySectionWidget extends StatelessWidget {
+class GallerySectionWidget extends StatefulWidget {
   final AppTheme theme;
   final List<String> galleryImages;
 
@@ -14,119 +14,132 @@ class GallerySectionWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // 1. Get the screen width for responsive layout logic
-    final screenWidth = MediaQuery.of(context).size.width;
+  State<GallerySectionWidget> createState() => _GallerySectionWidgetState();
+}
 
-    // 2. Determine the number of columns based on screen size
-    // For large screens (e.g., tablets/desktop), we can use a more complex layout.
-    // Let's define a breakpoint, for example, 600.0.
+class _GallerySectionWidgetState extends State<GallerySectionWidget> with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late ScrollController _scrollController;
+  int _currentTopImageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize fade animation controller
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    // Initialize scroll controller
+    _scrollController = ScrollController();
+
+    // Start fade animation cycle
+    _startFadeAnimation();
+
+    // Start auto-scroll after a short delay
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAutoScroll();
+    });
+  }
+
+  void _startFadeAnimation() {
+    _fadeController.forward().then((_) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          _fadeController.reverse().then((_) {
+            if (mounted) {
+              setState(() {
+                _currentTopImageIndex = (_currentTopImageIndex + 1) % widget.galleryImages.length;
+              });
+              _startFadeAnimation();
+            }
+          });
+        }
+      });
+    });
+  }
+
+  void _startAutoScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final duration = Duration(seconds: (maxScroll / 50).round());
+
+    _scrollController.animateTo(
+      maxScroll,
+      duration: duration,
+      curve: Curves.linear,
+    ).then((_) {
+      if (mounted && _scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+        _startAutoScroll();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     final isLargeScreen = screenWidth > 600.0;
 
-    // We will use a Column instead of a ListView.separated inside a SizedBox
-    // to allow the content to take the necessary vertical space, making it responsive
-    // to the number of images and the available screen height.
+    if (widget.galleryImages.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min, // Takes only the space needed
+      mainAxisSize: MainAxisSize.min,
       children: [
-        SectionTitleWidget(title: "Galerie", theme: theme),
-        const SizedBox(height: 15), // Add separation after title
+        SectionTitleWidget(title: "Galerie", theme: widget.theme),
+        const SizedBox(height: 15),
 
-        // Use a Column builder or a loop to generate the image rows
-        ...List.generate((galleryImages.length / (isLargeScreen ? 4 : 3)).ceil(), (index) {
-          final startIndex = index * (isLargeScreen ? 4 : 3);
+        // Top fading image
+        FadeTransition(
+          opacity: _fadeController,
+          child: GalleryImageWidget(
+            theme: widget.theme,
+            imgUrl: widget.galleryImages[_currentTopImageIndex],
+            aspectRatio: 2.0,
+          ),
+        ),
 
-          // Layout logic for Mobile (2+1 format):
-          if (!isLargeScreen) {
-            final image1 = galleryImages.length > startIndex
-                ? galleryImages[startIndex]
-                : null;
-            final image2 = galleryImages.length > startIndex + 1
-                ? galleryImages[startIndex + 1]
-                : null;
-            final image3 = galleryImages.length > startIndex + 2
-                ? galleryImages[startIndex + 2]
-                : null;
+        const SizedBox(height: 15),
 
-            return Padding(
-              padding: EdgeInsets.only(bottom: index == (galleryImages.length / 3).ceil() - 1 ? 0 : 15),
-              child: Column(
-                children: [
-                  // Image 1 (Full Width)
-                  if (image1 != null)
-                    GalleryImageWidget(
-                      theme: theme,
-                      imgUrl: image1,
-                      aspectRatio: 2.0,
+        if (widget.galleryImages.length > 1)
+          SizedBox(
+            height: isLargeScreen ? 200 : 150,
+            child: ListView.builder(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.galleryImages.length * 100,
+              itemBuilder: (context, index) {
+                final imageIndex = index % widget.galleryImages.length;
+                return Padding(
+                  padding: EdgeInsets.only(
+                    right: 15,
+                    left: index == 0 ? 0 : 0,
+                  ),
+                  child: AspectRatio(
+                    aspectRatio: 1.0,
+                    child: GalleryImageWidget(
+                      theme: widget.theme,
+                      imgUrl: widget.galleryImages[imageIndex],
+                      aspectRatio: 1.0,
                     ),
-
-                  // Image 2 & 3 (Half Width)
-                  if (image2 != null || image3 != null)
-                    const SizedBox(height: 15),
-
-                  if (image2 != null || image3 != null)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (image2 != null)
-                          Expanded(
-                            child: GalleryImageWidget(
-                              theme: theme,
-                              imgUrl: image2,
-                              aspectRatio: 1.0,
-                            ),
-                          ),
-                        if (image2 != null && image3 != null)
-                          const SizedBox(width: 15),
-                        if (image3 != null)
-                          Expanded(
-                            child: GalleryImageWidget(
-                              theme: theme,
-                              imgUrl: image3,
-                              aspectRatio: 1.0,
-                            ),
-                          ),
-                      ],
-                    ),
-                ],
-              ),
-            );
-          }
-
-          // Layout logic for Large Screens (e.g., 2x2 grid, or simple 4-image row):
-          else {
-            final image4 = galleryImages.length > startIndex + 3
-                ? galleryImages[startIndex + 3]
-                : null;
-
-            return Padding(
-              padding: EdgeInsets.only(bottom: index == (galleryImages.length / 4).ceil() - 1 ? 0 : 15),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (int i = 0; i < 3; i++)
-                    if (galleryImages.length > startIndex + i)
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: GalleryImageWidget(
-                                theme: theme,
-                                imgUrl: galleryImages[startIndex + i],
-                                aspectRatio: 1.0,
-                              ),
-                            ),
-                            if (i < 3 && galleryImages.length > startIndex + i + 1)
-                              const SizedBox(width: 15),
-                          ],
-                        ),
-                      ),
-                ],
-              ),
-            );
-          }
-        }),
+                  ),
+                );
+              },
+            ),
+          ),
       ],
     );
   }

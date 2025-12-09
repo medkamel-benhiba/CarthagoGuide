@@ -1,4 +1,4 @@
-name: carthagoguide
+name: CarthagoGuide
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -40,6 +40,8 @@ dependencies:
   carousel_slider: ^5.1.1
   shared_preferences: ^2.5.3
   cached_network_image: ^3.4.1
+  url_launcher: ^6.3.2
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

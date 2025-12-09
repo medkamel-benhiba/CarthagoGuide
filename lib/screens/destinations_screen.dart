@@ -1,15 +1,138 @@
-import 'package:carthagoguide/constants/theme.dart';
-import 'package:carthagoguide/screens/destinationDetails_screen.dart';
-import 'package:carthagoguide/widgets/destination_card.dart';
-import 'package:carthagoguide/widgets/hotels/hotel_searchbar.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/screens/destinationDetails_screen.dart';
+import 'package:CarthagoGuide/widgets/animatedSearchBar.dart';
+import 'package:CarthagoGuide/widgets/destination_card.dart';
+import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/destination_provider.dart';
+
+class SkeletonBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final double radius;
+  final AppTheme theme;
+
+  const SkeletonBox({
+    Key? key,
+    required this.width,
+    required this.height,
+    required this.theme,
+    this.radius = 8.0,
+  }) : super(key: key);
+
+  @override
+  _SkeletonBoxState createState() => _SkeletonBoxState();
+}
+
+class _SkeletonBoxState extends State<SkeletonBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Color?> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    final Color startColor = widget.theme.text.withOpacity(0.1);
+    final Color endColor = widget.theme.text.withOpacity(0.05);
+
+    _animation = ColorTween(
+      begin: startColor,
+      end: endColor,
+    ).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            color: _animation.value,
+            borderRadius: BorderRadius.circular(widget.radius),
+          ),
+        );
+      },
+    );
+  }
+}
+// --------------------------------------------------------------------------
+
 
 class DestinationScreen extends StatelessWidget {
   final VoidCallback? onMenuTap;
 
   const DestinationScreen({super.key, this.onMenuTap});
+
+  // --- SKELETON LOADER WIDGET ---
+  Widget _buildDestinationsSkeleton(AppTheme theme) {
+    Widget cardSkeleton = AspectRatio(
+      aspectRatio: 0.95,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image Placeholder
+          Expanded(
+            child: SkeletonBox(
+              theme: theme,
+              width: double.infinity,
+              height: double.infinity,
+              radius: 20,
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Title Line
+          SkeletonBox(theme: theme, width: double.infinity, height: 18, radius: 4),
+        ],
+      ),
+    );
+
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // SearchBar Skeleton
+          SkeletonBox(theme: theme, width: double.infinity, height: 50, radius: 10),
+          const SizedBox(height: 25),
+
+          // Results Count Skeleton
+          SkeletonBox(theme: theme, width: 120, height: 16, radius: 4),
+          const SizedBox(height: 15),
+
+          // Grid Skeleton
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 6, // Show 6 skeleton items
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 15.0,
+              mainAxisSpacing: 15.0,
+              childAspectRatio: 0.95,
+            ),
+            itemBuilder: (context, index) => cardSkeleton,
+          ),
+        ],
+      ),
+    );
+  }
+  // ------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +157,7 @@ class DestinationScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: destinationProvider.isLoading
-          ? Center(child: CircularProgressIndicator(color: theme.primary))
+          ? _buildDestinationsSkeleton(theme)
           : destinationProvider.error != null
           ? Center(
         child: Text(
@@ -72,7 +195,8 @@ class DestinationScreen extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: destinations.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 15.0,
                   mainAxisSpacing: 15.0,
@@ -83,16 +207,19 @@ class DestinationScreen extends StatelessWidget {
                   return DestinationCardWidget(
                     theme: theme,
                     title: d.name,
-                    imgUrl: d.gallery.first ?? "assets/images/placeholder.jpg",
+                    imgUrl: d.vignette ??
+                        "assets/images/placeholder.jpg",
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DestinationDetailsScreen(
-                            title: d.name,
-                            description: d.descriptionMobile ?? "",
-                            gallery: d.gallery,
-                          ),
+                          builder: (context) =>
+                              DestinationDetailsScreen(
+                                title: d.name,
+                                description: d.descriptionMobile ?? "",
+                                gallery: d.gallery,
+                                destinationId: d.id,
+                              ),
                         ),
                       );
                     },

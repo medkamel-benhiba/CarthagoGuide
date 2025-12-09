@@ -1,4 +1,4 @@
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 

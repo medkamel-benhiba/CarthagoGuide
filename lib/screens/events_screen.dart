@@ -1,43 +1,29 @@
-import 'package:carthagoguide/constants/theme.dart';
-import 'package:carthagoguide/screens/home_screen.dart';
-import 'package:carthagoguide/widgets/event_card.dart';
-import 'package:carthagoguide/widgets/hotels/filters/filter_section.dart';
-import 'package:carthagoguide/widgets/hotels/hotel_searchbar.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/providers/event_provider.dart';
+import 'package:CarthagoGuide/screens/eventDetails_screen.dart';
+import 'package:CarthagoGuide/widgets/event_card.dart';
+import 'package:CarthagoGuide/widgets/hotels/filters/filter_section.dart';
+import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// Dummy data from home_screen.dart
-final List<Map<String, String>> fullEventsList = [
-  {
-    "title": "Carthage International Festival",
-    "location": "Amphitheater of Carthage",
-    "date": "26 JULY 2024",
-    "image": "assets/images/event1.jpg",
-  },
-  {
-    "title": "Jazz à Carthage",
-    "location": "Cité de la Culture, Tunis",
-    "date": "17 MAR 2025",
-    "image": "assets/images/event2.jpg",
-  },
-  {
-    "title": "International Festival of Hammamet",
-    "location": "Hammamet",
-    "date": "05 AUG 2024",
-    "image": "assets/images/event3.jpg",
-  },
-  {
-    "title": "Festival de l'Oasis de Tozeur",
-    "location": "Tozeur",
-    "date": "21 DEC 2024",
-    "image": "assets/images/tozeur.jpg",
-  },
-];
-
-class EventsScreen extends StatelessWidget {
+class EventsScreen extends StatefulWidget {
   final VoidCallback? onMenuTap;
 
   const EventsScreen({super.key, this.onMenuTap});
+
+  @override
+  State<EventsScreen> createState() => _EventsScreenState();
+}
+
+class _EventsScreenState extends State<EventsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<EventProvider>(context, listen: false).fetchEvents();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +36,7 @@ class EventsScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: theme.text),
-          onPressed: onMenuTap,
+          onPressed: widget.onMenuTap,
         ),
         title: Text(
           "Évènements",
@@ -58,58 +44,95 @@ class EventsScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SearchBarWidget(theme: theme),
-              const SizedBox(height: 25),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Résultats (${events.length})",
-                    style: TextStyle(
-                      color: theme.text.withOpacity(0.6),
-                      fontWeight: FontWeight.w300,
-                      fontSize: 16,
-                    ),
-                  ),
-                  FilterSection(theme: theme, type: FilterType.basic),
+      body: Consumer<EventProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
+          if (provider.errorMessage != null) {
+            return Center(
+              child: Text(
+                provider.errorMessage!,
+                style: TextStyle(color: theme.text),
+              ),
+            );
+          }
+
+          if (provider.events.isEmpty) {
+            return Center(
+              child: Text(
+                "Aucun événement disponible",
+                style: TextStyle(color: theme.text),
+              ),
+            );
+          }
+
+          final events = provider.events;
+
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SearchBarWidget(theme: theme),
+                  const SizedBox(height: 25),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Résultats (${events.length})",
+                        style: TextStyle(
+                          color: theme.text.withOpacity(0.6),
+                          fontWeight: FontWeight.w300,
+                          fontSize: 16,
+                        ),
+                      ),
+                      //FilterSection(theme: theme, type: FilterType.basic),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+
+                  /// EVENTS LIST VIEW
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: events.length,
+                    itemBuilder: (context, index) {
+                      final event = events[index];
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 15),
+                        child: EventCardWidget(
+                          theme: theme,
+                          title: event.title,
+                          location: event.address ?? "Lieu non spécifié",
+                          imgUrl: event.cover ?? "",
+                          date: event.startDate ?? "",
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EventDetailsScreen(
+                                        event: event,
+                                      ),
+                                )
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
-              const SizedBox(height: 15),
-
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: fullEventsList.length,
-                itemBuilder: (context, index) {
-                  final event = fullEventsList[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 15), // small margin
-                    child: SizedBox(
-                      width: double.infinity, // full width card
-                      child: EventCardWidget(
-                        theme: theme,
-                        title: event["title"]!,
-                        location: event["location"]!,
-                        imgUrl: event["image"]!,
-                        date: event["date"]!,
-                        onTap: () {},
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/widgets/skeleton_box.dart';
 
 class DestinationCardWidget extends StatelessWidget {
   final AppTheme theme;
@@ -36,7 +37,7 @@ class DestinationCardWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 gradient: LinearGradient(
-                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                  colors: [Colors.black.withOpacity(0.85), Colors.transparent],
                   begin: Alignment.bottomCenter,
                   end: Alignment.center,
                 ),
@@ -72,12 +73,11 @@ class DestinationCardWidget extends StatelessWidget {
               ),
             ),
           ),
-          placeholder: (context, url) => Container(
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Center(child: CircularProgressIndicator()),
+          placeholder: (context, url) => SkeletonBox(
+            theme: theme,
+            width: double.infinity,
+            height: double.infinity,
+            radius: 20,
           ),
           errorWidget: (context, url, error) => Container(
             decoration: BoxDecoration(

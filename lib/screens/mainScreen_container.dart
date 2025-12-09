@@ -1,20 +1,22 @@
-import 'package:carthagoguide/constants/theme.dart';
-import 'package:carthagoguide/screens/activities_screen.dart';
-import 'package:carthagoguide/screens/circuits_screen.dart';
-import 'package:carthagoguide/screens/cultures_screen.dart';
-import 'package:carthagoguide/screens/destinations_screen.dart';
-import 'package:carthagoguide/screens/events_screen.dart';
-import 'package:carthagoguide/screens/guestHouse_screen.dart';
-import 'package:carthagoguide/screens/home_screen.dart';
-import 'package:carthagoguide/screens/hotels_screen.dart';
-import 'package:carthagoguide/screens/restaurants_screen.dart';
-import 'package:carthagoguide/screens/sponsor_screen.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/providers/destination_provider.dart';
+import 'package:CarthagoGuide/providers/guestHouse_provider.dart';
+import 'package:CarthagoGuide/providers/hotel_provider.dart';
+import 'package:CarthagoGuide/providers/restaurant_provider.dart';
+import 'package:CarthagoGuide/screens/activities_screen.dart';
+import 'package:CarthagoGuide/screens/circuits_screen.dart';
+import 'package:CarthagoGuide/screens/cultures_screen.dart';
+import 'package:CarthagoGuide/screens/destinations_screen.dart';
+import 'package:CarthagoGuide/screens/events_screen.dart';
+import 'package:CarthagoGuide/screens/guestHouse_screen.dart';
+import 'package:CarthagoGuide/screens/home_screen.dart';
+import 'package:CarthagoGuide/screens/hotels_screen.dart';
+import 'package:CarthagoGuide/screens/restaurants_screen.dart';
+import 'package:CarthagoGuide/screens/sponsor_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import for SystemNavigator.pop
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-
-// Import for Platform check (recommended but optional if only targeting Android/iOS)
 import 'dart:io' show Platform;
 
 class MainScreenContainer extends StatefulWidget {
@@ -47,7 +49,15 @@ class _MainScreenContainerState extends State<MainScreenContainer>
       CurvedAnimation(parent: _drawerController, curve: Curves.easeOutCubic),
     );
 
-    _currentScreen = HomeScreen(onMenuTap: toggleDrawer);
+    _currentScreen = HomeScreen(
+      onMenuTap: toggleDrawer,
+      onNavigateToDestinations: _navigateToDestinations,
+      onNavigateToHotels: _navigateToHotels,
+      onNavigateToRestaurants: _navigateToRestaurants,
+      onNavigateToCircuits: _navigateToCircuits,
+    );
+
+
   }
 
   void toggleDrawer() {
@@ -60,7 +70,6 @@ class _MainScreenContainerState extends State<MainScreenContainer>
       setState(() => isDrawerOpen = true);
     } else {
       _drawerController.reverse();
-      // Added a slight delay for better UX, ensuring the drawer is visually closed
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
           setState(() => isDrawerOpen = false);
@@ -69,11 +78,31 @@ class _MainScreenContainerState extends State<MainScreenContainer>
     }
   }
 
+  void _navigateToDestinations() {
+    _switchScreen(DestinationScreen(onMenuTap: toggleDrawer));
+  }
+
+  void _navigateToHotels() {
+    Provider.of<HotelProvider>(context, listen: false).clearFilters();
+    _switchScreen(HotelsScreen(onMenuTap: toggleDrawer));
+  }
+
+  void _navigateToRestaurants() {
+    Provider.of<RestaurantProvider>(context, listen: false).clearFilters();
+    _switchScreen(RestaurantScreen(onMenuTap: toggleDrawer));
+  }
+
+  void _navigateToCircuits() {
+    _switchScreen(CircuitScreen(onMenuTap: toggleDrawer));
+  }
+
   void _switchScreen(Widget newScreen) {
     setState(() {
       _currentScreen = newScreen;
     });
-    toggleDrawer();
+    if (isDrawerOpen) {
+      toggleDrawer();
+    }
   }
 
 
@@ -83,15 +112,12 @@ class _MainScreenContainerState extends State<MainScreenContainer>
     super.dispose();
   }
 
-  // 1. Implementation of the confirmation dialog function
   Future<bool> _onWillPop(BuildContext context, AppTheme theme) async {
-    // If the drawer is open, close it instead of showing the exit dialog
     if (isDrawerOpen) {
       toggleDrawer();
-      return false; // Prevent pop (exit)
+      return false;
     }
 
-    // Check if the current environment supports SystemNavigator.pop (e.g., Android)
     if (Platform.isAndroid || Platform.isFuchsia) {
       final shouldExit = await showDialog<bool>(
         context: context,
@@ -120,7 +146,6 @@ class _MainScreenContainerState extends State<MainScreenContainer>
                 backgroundColor: theme.primary,
               ),
               onPressed: () {
-                // Exit the app explicitly
                 Navigator.of(context).pop(true);
                 SystemNavigator.pop();
               },
@@ -130,13 +155,10 @@ class _MainScreenContainerState extends State<MainScreenContainer>
         ),
       );
 
-      // If the user presses "Oui, Quitter", we let the dialog close and then SystemNavigator.pop handles the exit.
-      // We return false here to prevent the default pop behavior, relying on SystemNavigator.pop.
       return false;
 
     }
 
-    // For iOS, allow the default pop behavior (app goes to background)
     return true;
   }
 
@@ -145,7 +167,6 @@ class _MainScreenContainerState extends State<MainScreenContainer>
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
 
-    // 2. Wrap the main body content with WillPopScope
     return WillPopScope(
       onWillPop: () => _onWillPop(context, theme),
       child: Scaffold(
@@ -157,7 +178,6 @@ class _MainScreenContainerState extends State<MainScreenContainer>
               toggleDrawer: toggleDrawer,
               switchScreen: _switchScreen,
             ),
-
             AnimatedBuilder(
               animation: _drawerController,
               builder: (context, child) {
@@ -194,8 +214,6 @@ class _MainScreenContainerState extends State<MainScreenContainer>
   }
 }
 
-// --- CUSTOM DRAWER MENU ---
-// ... (CustomDrawerMenu and DrawerItem remain the same as the previous response)
 class CustomDrawerMenu extends StatelessWidget {
   final VoidCallback? onThemeSwitch;
   final VoidCallback? toggleDrawer;
@@ -237,7 +255,23 @@ class CustomDrawerMenu extends StatelessWidget {
             label: "Accueil",
             color: textColor,
             onTap: () {
-              switchScreen?.call(HomeScreen(onMenuTap: toggleDrawer));
+              switchScreen?.call(HomeScreen(
+                onMenuTap: toggleDrawer,
+                onNavigateToDestinations: () {
+                  switchScreen?.call(DestinationScreen(onMenuTap: toggleDrawer));
+                },
+                onNavigateToHotels: () {
+                  Provider.of<HotelProvider>(context, listen: false).clearFilters();
+                  switchScreen?.call(HotelsScreen(onMenuTap: toggleDrawer));
+                },
+                onNavigateToRestaurants: () {
+                  Provider.of<RestaurantProvider>(context, listen: false).clearFilters();
+                  switchScreen?.call(RestaurantScreen(onMenuTap: toggleDrawer));
+                },
+                onNavigateToCircuits: () {
+                  switchScreen?.call(CircuitScreen(onMenuTap: toggleDrawer));
+                },
+              ));
             },
           ),
 
@@ -255,6 +289,7 @@ class CustomDrawerMenu extends StatelessWidget {
               label: "Hôtels",
               color: textColor,
               onTap: () {
+                Provider.of<HotelProvider>(context, listen: false).clearFilters();
                 switchScreen?.call(HotelsScreen(onMenuTap: toggleDrawer));
               }
           ),
@@ -264,6 +299,7 @@ class CustomDrawerMenu extends StatelessWidget {
               label: "Maisons D'Hôte",
               color: textColor,
               onTap: () {
+                Provider.of<GuestHouseProvider>(context, listen: false).clearFilters();
                 switchScreen?.call(GuestHouseScreen(onMenuTap: toggleDrawer));
               }
           ),
@@ -273,6 +309,7 @@ class CustomDrawerMenu extends StatelessWidget {
               label: "Restaurants",
               color: textColor,
               onTap: () {
+                Provider.of<RestaurantProvider>(context, listen: false).clearFilters();
                 switchScreen?.call(RestaurantScreen(onMenuTap: toggleDrawer));
               }
           ),

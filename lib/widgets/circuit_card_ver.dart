@@ -1,110 +1,143 @@
+import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
 
 class CircuitCard extends StatelessWidget {
   final AppTheme theme;
   final String title;
-  final String subtitle;
+  final String duration;
+  final String startDestination;
+  final String endDestination;
   final String imgUrl;
+  final double progress;
   final VoidCallback? onTap;
-  final bool fullWidth;
 
   const CircuitCard({
     super.key,
     required this.theme,
     required this.title,
-    required this.subtitle,
+    required this.duration,
+    required this.startDestination,
+    required this.endDestination,
     required this.imgUrl,
+    this.progress = 0.7,
     this.onTap,
-    this.fullWidth = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    double cardWidth = fullWidth ? double.infinity : 250;
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+    final isSmall = width < 360;
+    final isTablet = width > 700;
 
-    return Container(
-      width: cardWidth,
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              // Image background
-              AspectRatio(
-                aspectRatio: fullWidth ? 1.6 : 1.3,
-                child: Image.asset(
-                  imgUrl,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                ),
+    double f(double size) => size * (width / 390);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AspectRatio(
+        aspectRatio: isTablet ? 1.4 : 0.85,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(f(22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 4,
+                spreadRadius: 2,
+                offset: Offset(0, 1),
               ),
-
-              // Gradient overlay
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        theme.primary.withOpacity(0.93),
-                        Colors.transparent,
-                      ],
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.center,
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(f(22)),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.network(
+                    imgUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(color: Colors.grey),
+                  ),
+                ),
+                Positioned.fill(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+                    child: Container(color: Colors.black.withOpacity(0.2)),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.black.withOpacity(0.3),
+                          theme.primary.withOpacity(0.2),
+                          Colors.black.withOpacity(0.2),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-
-              // Text on top of image
-              Positioned(
-                left: 15,
-                right: 15,
-                bottom: 15,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withOpacity(0.6),
-                            offset: const Offset(1, 1),
-                            blurRadius: 3,
-                          ),
+                Padding(
+                  padding: EdgeInsets.all(f(18)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          _glassTag(duration, f),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withOpacity(0.6),
-                            offset: const Offset(1, 1),
-                            blurRadius: 2,
-                          ),
-                        ],
+                      const Spacer(),
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: f(16),
+                          height: 1.2,
+                          fontWeight: FontWeight.bold,
+                          shadows: const [
+                            Shadow(color: Colors.black38, blurRadius: 3)
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _glassTag(String text, double Function(double) f) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(f(12)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: f(10), vertical: f(5)),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(f(12)),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: f(13),
+            ),
           ),
         ),
       ),

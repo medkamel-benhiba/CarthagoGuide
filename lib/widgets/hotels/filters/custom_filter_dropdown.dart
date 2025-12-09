@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
 
 class CustomFilterDropdown extends StatelessWidget {
   final AppTheme theme;
@@ -8,6 +8,10 @@ class CustomFilterDropdown extends StatelessWidget {
   final List<Widget> options;
   final void Function(int)? onSelectedIndex;
 
+  // NEW: Dark-mode aware colors
+  final Color? backgroundColor;
+  final Color? optionBackgroundColor;
+
   const CustomFilterDropdown({
     super.key,
     required this.theme,
@@ -15,34 +19,53 @@ class CustomFilterDropdown extends StatelessWidget {
     required this.icon,
     required this.options,
     this.onSelectedIndex,
+    this.backgroundColor,
+    this.optionBackgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = theme.isDark;
+
+    final Color defaultBgColor =
+        backgroundColor ??
+            (isDark ? theme.primary.withOpacity(0.7) : theme.primary.withOpacity(0.8));
+
+    final Color defaultOptionColor =
+        optionBackgroundColor ?? (isDark ? Colors.black : Colors.white);
+
     return PopupMenuButton<int>(
+      color: defaultOptionColor,
       onSelected: (index) {
         if (onSelectedIndex != null) onSelectedIndex!(index);
-        /*ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Filtre sélectionné: ${index + 1}')),
-        );*/
       },
+
       itemBuilder: (context) {
         return List.generate(
           options.length,
               (index) => PopupMenuItem<int>(
             value: index,
-            child: options[index],
+            child: DefaultTextStyle(
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black,
+                fontSize: 14,
+              ),
+              child: options[index],
+            ),
           ),
         );
       },
+
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         decoration: BoxDecoration(
-          color: theme.primary.withOpacity(0.8),
+          color: defaultBgColor,
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: theme.primary.withOpacity(0.4),
+              color: isDark
+                  ? theme.primary.withOpacity(0.4)
+                  : theme.primary.withOpacity(0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -51,15 +74,23 @@ class CustomFilterDropdown extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white, size: 16),
+            Icon(
+              icon,
+              color: isDark ? Colors.white : Colors.white,
+              size: 16,
+            ),
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 16),
+            const Icon(Icons.keyboard_arrow_down,
+                color: Colors.white, size: 16),
           ],
         ),
       ),

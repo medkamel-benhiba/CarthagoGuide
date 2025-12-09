@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class RestaurantCardWidget extends StatelessWidget {
   final String title;
@@ -21,103 +22,156 @@ class RestaurantCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppTheme theme = Provider.of<ThemeProvider>(context).currentTheme;
+    const double cardHeight = 220;
+    const double borderRadius = 16;
+    const double padding = 16;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
+        height: cardHeight,
+        margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: theme.CardBG,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
-              color: theme.text.withOpacity(0.08),
-              blurRadius: 13,
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(15),
-                topRight: Radius.circular(15),
+            // Image with gradient overlay
+            CachedNetworkImage(
+              imageUrl: imgUrl,
+              imageBuilder: (context, imageProvider) => Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  image: DecorationImage(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.black.withOpacity(0.7),
+                        Colors.transparent
+                      ],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.center,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(15),
+                ),
               ),
-              child: Image.asset(
-                imgUrl,
-                height: 130, // Taller image for the vertical card
-                width: double.infinity,
-                fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(borderRadius),
+                ),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+              errorWidget: (context, url, error) => Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(borderRadius),
+                ),
+                child: const Icon(
+                  Icons.broken_image,
+                  size: 40,
+                  color: Colors.grey,
+                ),
               ),
             ),
 
-            // 2. Details Section (Bottom)
-            Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Theme-colored gradient overlay
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(borderRadius),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    theme.primary.withOpacity(0.7),
+                  ],
+                  stops: const [0.3, 1.0],
+                ),
+              ),
+            ),
+            Positioned(
+              top: 15,
+              left: 15,
+              right: 15,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: theme.text,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  // LOCATION BADGE
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
                       ),
-                      const SizedBox(height: 8),
-
-                      // Rating & Cuisine Row
-                      Row(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.75),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.star_rounded,
-                            color: Colors.amber,
-                            size: 18,
+                            Icons.location_on,
+                            color: Colors.red.shade400,
+                            size: 16,
                           ),
-                          const SizedBox(width: 5),
-                          Text(
-                            rating.toStringAsFixed(1),
-                            style: TextStyle(
-                              color: theme.text,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              location,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-
-                  // Title
-                  const SizedBox(height: 8),
-
-                  // Location Row
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        color: theme.primary.withOpacity(0.8),
-                        size: 16,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        location,
-                        style: TextStyle(
-                          color: theme.text.withOpacity(0.8),
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
+              ),
+            ),
+
+            // Title
+            Positioned(
+              left: padding,
+              bottom: 20,
+              right: padding,
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

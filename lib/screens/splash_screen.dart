@@ -1,5 +1,8 @@
-import 'package:carthagoguide/constants/theme.dart';
-import 'package:carthagoguide/screens/mainScreen_container.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/providers/destination_provider.dart';
+import 'package:CarthagoGuide/providers/hotel_provider.dart';
+import 'package:CarthagoGuide/providers/restaurant_provider.dart';
+import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 4),
     );
 
     _fadeAnimation = Tween<double>(
@@ -30,12 +33,12 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     _scaleAnimation = Tween<double>(
-      begin: 0.8,
+      begin: 0.5,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 500), () {
+      Future.delayed(const Duration(milliseconds: 700), () {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
             pageBuilder: (_, __, ___) => const MainScreenContainer(),
@@ -44,6 +47,12 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         );
       });
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<DestinationProvider>(context, listen: false).fetchDestinations();
+      Provider.of<HotelProvider>(context, listen: false).fetchAllHotels();
+      Provider.of<RestaurantProvider>(context, listen: false).fetchRestaurants();
+
     });
   }
 

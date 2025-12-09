@@ -1,11 +1,14 @@
-import 'package:carthagoguide/providers/destination_provider.dart';
-import 'package:carthagoguide/providers/hotel_provider.dart';
+import 'package:CarthagoGuide/providers/destination_provider.dart';
+import 'package:CarthagoGuide/providers/hotel_provider.dart';
+import 'package:CarthagoGuide/providers/guestHouse_provider.dart';
+import 'package:CarthagoGuide/providers/restaurant_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
 import 'custom_filter_dropdown.dart';
+import 'package:collection/collection.dart'; // pour firstWhereOrNull
 
-enum FilterType { hotel, restaurant, basic }
+enum FilterType { hotel, restaurant, guestHouse, basic }
 
 class FilterSection extends StatelessWidget {
   final AppTheme theme;
@@ -23,23 +26,116 @@ class FilterSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isHotel = type == FilterType.hotel;
     final bool isRestaurant = type == FilterType.restaurant;
+    final bool isGuestHouse = type == FilterType.guestHouse;
 
-    final destinationProvider = Provider.of<DestinationProvider>(context);
-    final hotelProvider = Provider.of<HotelProvider>(context, listen: false);
+    if (isHotel) {
+      return Consumer<HotelProvider>(
+        builder: (context, provider, child) =>
+            _buildFilterRow(context, provider, isHotel: true),
+      );
+    } else if (isGuestHouse) {
+      return Consumer<GuestHouseProvider>(
+        builder: (context, provider, child) =>
+            _buildFilterRow(context, provider, isGuestHouse: true),
+      );
+    } else if (isRestaurant) {
+      return Consumer<RestaurantProvider>(
+        builder: (context, provider, child) =>
+            _buildFilterRow(context, provider, isRestaurant: true),
+      );
+    } else {
+      return _buildFilterRow(context, null);
+    }
+  }
 
+  Map<String, dynamic> _getProviderFilters(dynamic provider) {
+    if (provider is HotelProvider) {
+      return {
+        'stars': provider.selectedStars,
+        'destination': provider.selectedDestination,
+        'destinationId': provider.selectedDestinationId,
+        'clear': provider.clearFilters
+      };
+    } else if (provider is GuestHouseProvider) {
+      return {
+        'stars': provider.selectedStars,
+        'destination': provider.selectedDestination,
+        'clear': provider.clearFilters
+      };
+    } else if (provider is RestaurantProvider) {
+      return {
+        'forks': provider.minRating != null ? provider.minRating!.toInt() : null,
+        'destination': provider.currentState,
+        'clear': provider.clearFilters
+      };
+    }
+    return {'stars': null, 'destination': null, 'clear': null};
+  }
+
+  void _setProviderStars(dynamic provider, int stars) {
+    if (provider is HotelProvider) {
+      provider.setStars(stars);
+    } else if (provider is GuestHouseProvider) {
+      provider.setStars(stars);
+    } else if (provider is RestaurantProvider) {
+      provider.setMinRating(stars.toDouble());
+    }
+  }
+
+  void _setProviderDestination(dynamic provider, String destination) {
+    if (provider is HotelProvider) {
+      provider.setDestination(destination);
+    } else if (provider is GuestHouseProvider) {
+      provider.setDestination(destination);
+    } else if (provider is RestaurantProvider) {
+      provider.setStateFilter(destination);
+    }
+  }
+
+  Widget _buildFilterRow(
+      BuildContext context,
+      dynamic provider, {
+        bool isHotel = false,
+        bool isRestaurant = false,
+        bool isGuestHouse = false,
+      }) {
+    final destinationProvider = Provider.of<DestinationProvider>(context, listen: false);
     final destinations = destinationProvider.destinations;
 
-    final bool showPrimaryFilter = isHotel || isRestaurant;
+    final filters = _getProviderFilters(provider);
 
-    // Dynamic hotel/restaurant label
-    final String primaryLabel = isHotel ? "Étoiles" : "Fourchette";
+    final currentStarsOrForks = provider is HotelProvider
+        ? provider.selectedStars
+        : provider is GuestHouseProvider
+        ? provider.selectedStars
+        : provider is RestaurantProvider
+        ? provider.minRating?.toInt()
+        : null;
+
+    // 🔹 Corrige affichage de la destination : utilise le nom si ID est sélectionné
+    final currentDestination = provider is HotelProvider
+        ? (provider.selectedDestination ??
+        destinations.firstWhereOrNull((d) => d.id == provider.selectedDestinationId)?.name)
+        : provider is GuestHouseProvider
+        ? provider.selectedDestination
+        : provider is RestaurantProvider
+        ? provider.currentState
+        : null;
+
+    final VoidCallback? clearFilters = filters['clear'] as VoidCallback?;
+
+    // Label dynamique
+    final String primaryLabel = isHotel
+        ? (currentStarsOrForks != null ? "$currentStarsOrForks Étoile${currentStarsOrForks > 1 ? 's' : ''}" : "Étoiles")
+        : (isRestaurant
+        ? (currentStarsOrForks != null ? "$currentStarsOrForks Fourchette${currentStarsOrForks > 1 ? 's' : ''}" : "Fourchette")
+        : "Filtre");
+
     final IconData primaryDropdownIcon =
-    isHotel ? Icons.star_border : Icons.restaurant_menu;
-
+    isHotel ? Icons.star_border : (isRestaurant ? Icons.restaurant_menu : Icons.filter_list);
     final IconData visualRatingIcon =
-    isHotel ? Icons.star : Icons.local_dining;
+    isHotel ? Icons.star : (isRestaurant ? Icons.restaurant_menu : Icons.filter_list);
 
-    // Build star/fork rating icons
     final List<Widget> primaryOptions = ratingFilters.map((count) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -55,11 +151,9 @@ class FilterSection extends StatelessWidget {
     }).toList();
 
     return Row(
-      mainAxisAlignment:
-      showPrimaryFilter ? MainAxisAlignment.center : MainAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // ⭐ Star/Fork filter (only hotels or restaurants)
-        if (showPrimaryFilter) ...[
+        if (isHotel) ...[
           CustomFilterDropdown(
             theme: theme,
             label: primaryLabel,
@@ -67,44 +161,38 @@ class FilterSection extends StatelessWidget {
             options: primaryOptions,
             onSelectedIndex: (index) {
               final value = ratingFilters[index];
-
-              if (isHotel) {
-                hotelProvider.setStars(value);
-                print("FILTER → $value star(s)");
-              } else if (isRestaurant) {
-                print("FILTER → $value fork(s)");
-                // TODO restaurant filter
-              }
+              _setProviderStars(provider, value);
             },
           ),
           const SizedBox(width: 15),
         ],
-
-        // 📍 REAL DESTINATIONS FROM API
+        // Destination Filter
         CustomFilterDropdown(
           theme: theme,
-          label: "Destination",
+          label: currentDestination ?? "Destination",
           icon: Icons.location_on_outlined,
           options: destinations
-              .map(
-                (d) => Text(
-              d.name,
-              style: TextStyle(color: theme.text),
-            ),
-          )
+              .map((d) => Text(d.name, style: TextStyle(color: theme.text)))
               .toList(),
           onSelectedIndex: (index) {
             final selected = destinations[index].name;
-
-            print("FILTER → Destination = $selected");
-
-            if (isHotel) {
-              hotelProvider.setDestination(selected);
-            }
-
-            // You can add restaurant destination logic later
+            _setProviderDestination(provider, selected);
           },
         ),
+        const SizedBox(width: 15),
+        // Clear Filters
+        if (clearFilters != null && (currentStarsOrForks != null || currentDestination != null))
+          GestureDetector(
+            onTap: clearFilters,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFA30000),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+            ),
+          ),
       ],
     );
   }

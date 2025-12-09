@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
 
 class HotelCardWidget extends StatelessWidget {
   final AppTheme theme;
@@ -8,6 +8,7 @@ class HotelCardWidget extends StatelessWidget {
   final String destination;
   final String imgUrl;
   final double rating;
+  final bool? isHotel;
 
   final VoidCallback onTap;
 
@@ -19,9 +20,9 @@ class HotelCardWidget extends StatelessWidget {
     required this.imgUrl,
     required this.rating,
     required this.onTap,
+    this.isHotel,
   });
 
-  // Calculate the number of filled stars (clamped between 1 and 5)
   int get starCount => rating.round().clamp(1, 5);
 
   @override
@@ -31,7 +32,6 @@ class HotelCardWidget extends StatelessWidget {
     const double padding = 16;
 
     return GestureDetector(
-      // ⭐️ FIX: Use the external onTap callback
       onTap: onTap,
 
       child: Container(
@@ -49,12 +49,11 @@ class HotelCardWidget extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // 1. Background image
             CachedNetworkImage(
               imageUrl: imgUrl,
               imageBuilder: (context, imageProvider) => Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(borderRadius),
                   image: DecorationImage(
                     image: imageProvider,
                     fit: BoxFit.cover,
@@ -62,7 +61,7 @@ class HotelCardWidget extends StatelessWidget {
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(borderRadius),
                     gradient: LinearGradient(
                       colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                       begin: Alignment.bottomCenter,
@@ -76,20 +75,19 @@ class HotelCardWidget extends StatelessWidget {
               placeholder: (context, url) => Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(borderRadius),
                 ),
                 child: const Center(child: CircularProgressIndicator()),
               ),
               errorWidget: (context, url, error) => Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(borderRadius),
                 ),
                 child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
               ),
             ),
 
-            // 2. Gradient overlay
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(borderRadius),
@@ -105,7 +103,6 @@ class HotelCardWidget extends StatelessWidget {
               ),
             ),
 
-            // 4. Hotel Name (Title)
             Positioned(
               left: padding,
               bottom: 40,
@@ -122,31 +119,31 @@ class HotelCardWidget extends StatelessWidget {
               ),
             ),
 
-            // 5. Location / Star Rating Row
             Positioned(
               left: padding,
               bottom: padding,
               child: Row(
                 children: [
-                  // Stars rating
-                  ...List.generate(
-                    starCount,
-                        (index) => const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 16,
+                  if (isHotel != false) ...[
+                    // Stars rating
+                    ...List.generate(
+                      starCount,
+                          (index) => const Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                        size: 16,
+                      ),
                     ),
-                  ),
-                  // Border stars to complete 5 total
-                  ...List.generate(
-                    5 - starCount,
-                        (index) => Icon(
-                      Icons.star_border,
-                      color: Colors.white.withOpacity(0.6),
-                      size: 16,
+                    ...List.generate(
+                      5 - starCount,
+                          (index) => Icon(
+                        Icons.star_border,
+                        color: Colors.white.withOpacity(0.6),
+                        size: 16,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
+                    const SizedBox(width: 8),
+                  ],
 
                   // Location Icon and Text (Address)
                   Icon(

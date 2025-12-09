@@ -1,5 +1,6 @@
-import 'package:carthagoguide/constants/theme.dart';
-import 'package:carthagoguide/models/hotel.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/models/hotel.dart';
+import 'package:CarthagoGuide/widgets/contact_section.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +12,7 @@ class HotelDetailsScreen extends StatefulWidget {
 
   const HotelDetailsScreen({
     super.key,
-    required this.hotel
+    required this.hotel,
   });
 
   @override
@@ -20,6 +21,7 @@ class HotelDetailsScreen extends StatefulWidget {
 
 class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
   late VideoPlayerController _videoController;
+  bool _isDescriptionExpanded = false;
 
   @override
   void initState() {
@@ -43,7 +45,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
   String _stripHtmlTags(String htmlText) {
     if (htmlText.isEmpty) return '';
-
     final RegExp exp = RegExp(r"<[^>]*>", multiLine: true);
     String plainText = htmlText.replaceAll(exp, '');
     plainText = plainText
@@ -54,13 +55,11 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
         .replaceAll(' ', ' ')
         .replaceAll(RegExp(r' {2,}'), ' ')
         .trim();
-
     return plainText;
   }
 
-
   String _buildStarRating(int rating) {
-    int count = rating.round().clamp(1, 5);
+    int count = rating.clamp(1, 5);
     return List.generate(count, (_) => '★').join() +
         List.generate(5 - count, (_) => '☆').join();
   }
@@ -109,7 +108,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 : const SizedBox.shrink()),
           ),
 
-
+          // Back button
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
@@ -125,6 +124,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
             ),
           ),
 
+          // Details card
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -142,6 +142,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Hotel Name
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -159,8 +160,9 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                     ),
                     const SizedBox(height: 5),
 
+                    // Rating stars
                     Text(
-                      _buildStarRating(widget.hotel.categoryCode  ?? 0),
+                      _buildStarRating(widget.hotel.categoryCode ?? 0),
                       style: const TextStyle(
                         color: Colors.amber,
                         fontSize: 22,
@@ -175,7 +177,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                         Icon(Icons.location_on, color: theme.text, size: 18),
                         const SizedBox(width: 5),
                         Text(
-                          widget.hotel.destinationName??"",
+                          widget.hotel.destinationName ?? "",
                           style: TextStyle(
                             color: theme.text,
                             fontSize: 16,
@@ -185,12 +187,9 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                     ),
 
                     const SizedBox(height: 30),
-
-                    // Gallery Section
                     _GallerySection(theme: theme, galleryImages: widget.hotel.images ?? []),
 
                     const SizedBox(height: 30),
-
                     Text(
                       "Équipements",
                       style: TextStyle(
@@ -200,7 +199,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                       ),
                     ),
                     const SizedBox(height: 15),
-
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
@@ -213,7 +211,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
                     const SizedBox(height: 30),
 
-                    // Description Section
                     Text(
                       "Description",
                       style: TextStyle(
@@ -223,32 +220,62 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Text(
-                      _stripHtmlTags(widget.hotel.description??""),
-                      style: TextStyle(
-                        color: theme.text,
-                        fontSize: 16,
-                        height: 1.5,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final fullText = _stripHtmlTags(widget.hotel.description ?? "");
+                        final truncatedText = fullText.length > 220
+                            ? fullText.substring(0, 220) + "..."
+                            : fullText;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _isDescriptionExpanded ? fullText : truncatedText,
+                              style: TextStyle(
+                                color: theme.text,
+                                fontSize: 16,
+                                height: 1.5,
+                              ),
+                            ),
+                            if (fullText.length > 220)
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _isDescriptionExpanded = !_isDescriptionExpanded;
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 5.0),
+                                  child: Text(
+                                    _isDescriptionExpanded ? "Afficher moins" : "Afficher plus",
+                                    style: TextStyle(
+                                      color: theme.primary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 30),
 
                     // Contact Information
-                    _ContactSection(theme: theme,hotel: widget.hotel),
-
+                    _ContactSection(theme: theme, hotel: widget.hotel),
                   ],
                 ),
               ),
             ),
           ),
-
         ],
       ),
     );
   }
 }
-
 
 class _DetailActionButton extends StatelessWidget {
   final IconData icon;
@@ -352,11 +379,10 @@ class _GallerySection extends StatelessWidget {
 class _ContactSection extends StatelessWidget {
   final AppTheme theme;
   final Hotel hotel;
-  const _ContactSection({required this.theme,required this.hotel});
+  const _ContactSection({required this.theme, required this.hotel});
 
   @override
   Widget build(BuildContext context) {
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -369,57 +395,11 @@ class _ContactSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-
-        // Mail
-        _ContactDetailRow(theme: theme, icon: Icons.email_outlined, text: hotel.email??"", isLink: true),
-
-        // Phone
-        _ContactDetailRow(theme: theme, icon: Icons.phone_outlined, text: hotel.phone, isLink: true),
-
-        // Address
-        _ContactDetailRow(theme: theme, icon: Icons.location_on_outlined, text: hotel.address, isLink: false),
+        ContactDetailRow(theme: theme, icon: Icons.email_outlined, text: hotel.email ?? "", isLink: true),
+        ContactDetailRow(theme: theme, icon: Icons.phone_outlined, text: hotel.phone, isLink: true),
+        ContactDetailRow(theme: theme, icon: Icons.location_on_outlined, text: hotel.address, isLink: false),
       ],
     );
   }
 }
 
-class _ContactDetailRow extends StatelessWidget {
-  final AppTheme theme;
-  final IconData icon;
-  final String text;
-  final bool isLink;
-
-  const _ContactDetailRow({
-    required this.theme,
-    required this.icon,
-    required this.text,
-    required this.isLink,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 4.0),
-            child: Icon(icon, color: theme.primary, size: 20),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: isLink ? theme.primary : theme.text,
-                fontSize: 16,
-                fontWeight: isLink ? FontWeight.w500 : FontWeight.normal,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

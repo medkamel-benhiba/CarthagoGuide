@@ -1,5 +1,5 @@
-import 'package:carthagoguide/constants/theme.dart';
-import 'package:carthagoguide/widgets/section_title.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/widgets/section_title.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

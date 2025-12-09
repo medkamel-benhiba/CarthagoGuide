@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:carthagoguide/models/guestHouse.dart';
-import 'package:carthagoguide/models/hotel_details.dart';
-import 'package:carthagoguide/models/state.dart';
+import 'package:CarthagoGuide/models/guestHouse.dart';
+import 'package:CarthagoGuide/models/hotel_details.dart';
+import 'package:CarthagoGuide/models/state.dart';
+import 'package:CarthagoGuide/models/voyage.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/activity.dart';
 import '../models/artisanat.dart';
 import '../models/destination.dart';
@@ -17,6 +19,7 @@ import '../models/restaurant.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://test.tunisiagotravel.com';
+  final String _cachevoy = 'cached_voyages';
 
   Future<List<Destination>> getDestinations() async {
     final response =
@@ -457,6 +460,52 @@ Future<List<Hotel>> gethotels() async {
       return list.map((e) => Hotel.fromJson(e)).toList();
     } else {
       throw Exception('Erreur serveur: ${response.statusCode}');
+    }
+  }
+
+  Future<List<Voyage>> getAllVoyage() async {
+    try {
+      final response = await http.get(Uri.parse('$_baseUrl/utilisateur/voyages'));
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+
+        if (jsonData == null || jsonData['voyages'] == null) {
+          throw Exception("API returned null data");
+        }
+
+        if (jsonData['voyages'] is List) {
+          final voyages = (jsonData['voyages'] as List)
+              .map((v) => Voyage.fromJson(v))
+              .toList();
+
+          // Save to SharedPreferences cache
+          final prefs = await SharedPreferences.getInstance();
+          prefs.setString(_cachevoy, jsonEncode(voyages.map((v) => v.toJson()).toList()));
+
+          return voyages;
+        } else {
+          throw Exception("Unexpected data format: ${jsonData['voyages']}");
+        }
+      } else {
+        throw Exception("Failed to fetch voyages: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      print("Error in getAllVoyage: $e");
+      print("StackTrace: $stackTrace");
+
+      // Try to load cached voyages if API fails
+      final prefs = await SharedPreferences.getInstance();
+      final cachedData = prefs.getString(_cachevoy);
+      if (cachedData != null) {
+        try {
+          final List jsonList = jsonDecode(cachedData);
+          return jsonList.map((v) => Voyage.fromJson(v)).toList();
+        } catch (_) {
+          print("Failed to load cached voyages");
+        }
+      }
+      return [];
     }
   }
 }

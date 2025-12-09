@@ -1,8 +1,8 @@
-import 'package:carthagoguide/widgets/reel_circle.dart';
-import 'package:carthagoguide/widgets/section_title.dart';
-import 'package:carthagoguide/widgets/story_viewer.dart';
+import 'package:CarthagoGuide/widgets/reel_circle.dart';
+import 'package:CarthagoGuide/widgets/section_title.dart';
+import 'package:CarthagoGuide/widgets/story_viewer.dart';
 import 'package:flutter/material.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
 
 class ExperiencesReelSection extends StatelessWidget {
   final AppTheme theme;
@@ -19,7 +19,7 @@ class ExperiencesReelSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionTitleWidget(title: "Experiences", theme: theme),
+        SectionTitleWidget(title: "Moments", theme: theme),
         const SizedBox(height: 15),
         SizedBox(
           height: 105,

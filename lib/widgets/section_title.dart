@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:carthagoguide/constants/theme.dart';
+import 'package:CarthagoGuide/constants/theme.dart';
 
 class SectionTitleWidget extends StatelessWidget {
   final String title;
   final AppTheme theme;
-  final bool? showMore;
-
+  final bool showMore;
+  final VoidCallback? onTap;
 
   const SectionTitleWidget({
     super.key,
     required this.title,
     required this.theme,
-    this.showMore
+    this.showMore = false,
+    this.onTap,
   });
 
   @override
@@ -22,17 +22,24 @@ class SectionTitleWidget extends StatelessWidget {
       children: [
         Text(
           title,
-          style: GoogleFonts.montserrat(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+          style: TextStyle(
             color: theme.text,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        if(showMore == true)
-        Text(
-          "Voir Tout",
-          style: TextStyle(color: theme.primary, fontWeight: FontWeight.w600),
-        ),
+        if (showMore)
+          GestureDetector(
+            onTap: onTap,
+            child: Text(
+              "Voir Plus",
+              style: TextStyle(
+                color: theme.primary,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
       ],
     );
   }

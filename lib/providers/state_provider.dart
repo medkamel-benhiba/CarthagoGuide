@@ -1,4 +1,4 @@
-import 'package:carthagoguide/models/state.dart';
+import 'package:CarthagoGuide/models/state.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
