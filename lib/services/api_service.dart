@@ -18,7 +18,7 @@ import '../models/restaurant.dart';
 
 
 class ApiService {
-  static const String _baseUrl = 'https://test.tunisiagotravel.com';
+  static const String _baseUrl = 'https://7test.tunisiagotravel.com';
   final String _cachevoy = 'cached_voyages';
 
   Future<List<Destination>> getDestinations() async {

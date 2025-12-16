@@ -33,7 +33,6 @@ class HotelCardWidget extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-
       child: Container(
         height: cardHeight,
         margin: const EdgeInsets.only(bottom: 16),
@@ -49,6 +48,7 @@ class HotelCardWidget extends StatelessWidget {
         ),
         child: Stack(
           children: [
+            // 1. Cached Network Image
             CachedNetworkImage(
               imageUrl: imgUrl,
               imageBuilder: (context, imageProvider) => Container(
@@ -69,7 +69,6 @@ class HotelCardWidget extends StatelessWidget {
                     ),
                   ),
                   padding: const EdgeInsets.all(15),
-
                 ),
               ),
               placeholder: (context, url) => Container(
@@ -88,6 +87,7 @@ class HotelCardWidget extends StatelessWidget {
               ),
             ),
 
+            // 2. Bottom Gradient Overlay
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(borderRadius),
@@ -102,6 +102,43 @@ class HotelCardWidget extends StatelessWidget {
                 ),
               ),
             ),
+
+            // 3. Stars rating (New Position)
+            if (isHotel != false)
+              Positioned(
+                top: padding,
+                right: padding,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Filled Stars
+                      ...List.generate(
+                        starCount,
+                            (index) => const Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                          size: 14,
+                        ),
+                      ),
+                      // Bordered Stars
+                      ...List.generate(
+                        5 - starCount,
+                            (index) => Icon(
+                          Icons.star_border,
+                          color: Colors.white.withOpacity(0.6),
+                          size: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
             Positioned(
               left: padding,
@@ -124,28 +161,6 @@ class HotelCardWidget extends StatelessWidget {
               bottom: padding,
               child: Row(
                 children: [
-                  if (isHotel != false) ...[
-                    // Stars rating
-                    ...List.generate(
-                      starCount,
-                          (index) => const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                        size: 16,
-                      ),
-                    ),
-                    ...List.generate(
-                      5 - starCount,
-                          (index) => Icon(
-                        Icons.star_border,
-                        color: Colors.white.withOpacity(0.6),
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-
-                  // Location Icon and Text (Address)
                   Icon(
                     Icons.location_on,
                     color: Colors.white.withOpacity(0.8),

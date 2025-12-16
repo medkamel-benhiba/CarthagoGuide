@@ -1,5 +1,6 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/providers/restaurant_provider.dart';
+import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:CarthagoGuide/screens/restaurantDetails_screen.dart';
 import 'package:CarthagoGuide/widgets/hotels/filters/filter_section.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
@@ -10,9 +11,7 @@ import 'package:provider/provider.dart';
 import '../widgets/skeleton_box.dart';
 
 class RestaurantScreen extends StatefulWidget {
-  final VoidCallback? onMenuTap;
-
-  const RestaurantScreen({super.key, this.onMenuTap});
+  const RestaurantScreen({super.key});
 
   @override
   State<RestaurantScreen> createState() => _RestaurantScreenState();
@@ -20,6 +19,10 @@ class RestaurantScreen extends StatefulWidget {
 
 class _RestaurantScreenState extends State<RestaurantScreen> {
   int _currentPage = 1;
+  void _toggleDrawer() {
+    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
+    containerState?.toggleDrawer();
+  }
 
   @override
   void initState() {
@@ -97,7 +100,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: theme.text),
-          onPressed: widget.onMenuTap,
+          onPressed: _toggleDrawer,
         ),
         title: Text(
           "Restaurants",

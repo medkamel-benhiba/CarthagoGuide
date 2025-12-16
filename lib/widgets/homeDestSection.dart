@@ -1,5 +1,4 @@
-import 'dart:async'; // Import for Timer
-
+import 'dart:async';
 import 'package:CarthagoGuide/models/destination.dart';
 import 'package:CarthagoGuide/screens/destinationDetails_screen.dart';
 import 'package:CarthagoGuide/widgets/homeDestCard.dart';
@@ -7,9 +6,13 @@ import 'package:flutter/material.dart';
 
 class NearbyDestinationSection extends StatefulWidget {
   final List<Destination> destinations;
+  final VoidCallback? onMenuTap;
 
-  const NearbyDestinationSection({Key? key, required this.destinations})
-    : super(key: key);
+  const NearbyDestinationSection({
+    Key? key,
+    required this.destinations,
+    this.onMenuTap,
+  }) : super(key: key);
 
   @override
   State<NearbyDestinationSection> createState() =>
@@ -18,25 +21,19 @@ class NearbyDestinationSection extends StatefulWidget {
 
 class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
   int currentIndex = 0;
-  // 1. Declare the Timer
   Timer? _timer;
-  // 2. Define the scroll duration
   final Duration _autoScrollDuration = const Duration(seconds: 5);
 
-  // Method to start the timer for automatic scrolling
   void _startAutoScroll() {
-    // Only start the timer if there's more than one destination
     if (widget.destinations.length > 1) {
       _timer = Timer.periodic(_autoScrollDuration, (Timer timer) {
         setState(() {
-          // Calculate the index of the next card
           currentIndex = (currentIndex + 1) % widget.destinations.length;
         });
       });
     }
   }
 
-  // Method to stop the timer (useful when the user interacts or the widget is disposed)
   void _stopAutoScroll() {
     _timer?.cancel();
     _timer = null;
@@ -45,13 +42,11 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
   @override
   void initState() {
     super.initState();
-    // 3. Start the auto-scroll when the widget is initialized
     _startAutoScroll();
   }
 
   @override
   void dispose() {
-    // 4. Cancel the timer when the widget is removed from the widget tree
     _stopAutoScroll();
     super.dispose();
   }
@@ -73,16 +68,14 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
   @override
   Widget build(BuildContext context) {
     if (widget.destinations.isEmpty) {
-      // 5. If empty, ensure the timer is stopped (though unlikely to be running here)
       _stopAutoScroll();
       return const SizedBox.shrink();
     }
 
-    // Check if auto-scroll should be active. If there is only one item, stop the scroll.
     if (widget.destinations.length <= 1 && _timer != null) {
       _stopAutoScroll();
     } else if (widget.destinations.length > 1 && _timer == null) {
-      _startAutoScroll(); // Restart if more items are added dynamically
+      _startAutoScroll();
     }
 
     final bool hasNext = currentIndex < widget.destinations.length - 1;
@@ -94,23 +87,20 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 0),
           child: SizedBox(
-            height: 200,
+            height: 180,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // 1. Third Card (Farthest Back)
-                if (widget.destinations.length >
-                    2) // Check if there are at least 3 items
+                if (widget.destinations.length > 2)
                   Positioned(
                     left: 0,
                     right: 0,
                     top: 10,
-                    height: 200,
+                    height: 180,
                     child: SizedBox(
                       width: double.infinity,
                       height: 250,
                       child: Opacity(
-                        // Use modulo arithmetic for wrapping destinations
                         opacity: 0.25,
                         child: HomeDestCard(
                           destination:
@@ -122,19 +112,16 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
                     ),
                   ),
 
-                // 2. Second Card (Middle Layer)
-                if (widget.destinations.length >
-                    1) // Check if there are at least 2 items
+                if (widget.destinations.length > 1)
                   Positioned(
                     left: 0,
                     right: 30,
                     top: 10,
-                    height: 200,
+                    height: 180,
                     child: SizedBox(
                       width: double.infinity,
                       height: 250,
                       child: Opacity(
-                        // Use modulo arithmetic for wrapping destinations
                         opacity: 0.45,
                         child: HomeDestCard(
                           destination:
@@ -150,7 +137,7 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
                   left: 0,
                   right: 60,
                   top: 10,
-                  height: 200,
+                  height: 180,
                   child: GestureDetector(
                     onHorizontalDragStart: (_) => _stopAutoScroll(),
                     onHorizontalDragEnd: (details) {
@@ -168,13 +155,11 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
                           });
                         }
                       } else if (details.primaryVelocity! < -minVelocity) {
-                        // Swiped left (to next card)
                         if (currentIndex < widget.destinations.length - 1) {
                           setState(() {
                             currentIndex++;
                           });
                         } else {
-                          // Wrap around to the first card
                           setState(() {
                             currentIndex = 0;
                           });
@@ -187,7 +172,6 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
                         return FadeTransition(opacity: animation, child: child);
                       },
                       child: SizedBox(
-                        // Use a key to enable AnimatedSwitcher to animate between different cards
                         key: ValueKey(currentIndex),
                         width: double.infinity,
                         height: 280,
@@ -208,7 +192,6 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
         ),
         SizedBox(height: 8),
 
-        // Page indicators
         if (widget.destinations.length > 1)
           Padding(
             padding: const EdgeInsets.only(top: 16),

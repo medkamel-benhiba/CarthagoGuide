@@ -11,7 +11,7 @@ class ActivityProvider with ChangeNotifier {
   /// All fetched activities
   List<Activity> allActivities = [];
 
-  /// Current displayed activities
+  /// Current displayed activities (filtered/searched)
   List<Activity> _activities = [];
   List<Activity> get activities => _activities;
 
@@ -22,6 +22,13 @@ class ActivityProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   Activity? selectedActivity;
+
+  // Search
+  String _searchQuery = "";
+  String get searchQuery => _searchQuery;
+
+  int _totalActivitiesCount = 0;
+  int get totalActivitiesCount => _totalActivitiesCount;
 
   /// Flag to track if all activities have been fetched
   bool _allActivitiesFetched = false;
@@ -48,8 +55,14 @@ class ActivityProvider with ChangeNotifier {
         _activitiesByDestination.putIfAbsent(destId, () => []);
         _activitiesByDestination[destId]!.add(activity);
       }
+
+      // Initialize _activities with all activities (no filter applied yet)
+      _activities = List.from(allActivities);
+      _totalActivitiesCount = allActivities.length;
+
     } catch (e) {
       allActivities = [];
+      _activities = [];
       _allActivitiesFetched = false; // Allow retry on error
       _errorMessage = "Erreur lors du chargement: $e";
       debugPrint(_errorMessage);
@@ -79,6 +92,9 @@ class ActivityProvider with ChangeNotifier {
         _activitiesByDestination.putIfAbsent(destId, () => []);
         _activitiesByDestination[destId]!.add(activity);
       }
+
+      _totalActivitiesCount = _activities.length;
+
     } catch (e) {
       _activities = [];
       _errorMessage = "Erreur lors du chargement: $e";
@@ -92,6 +108,7 @@ class ActivityProvider with ChangeNotifier {
   /// Get activities by destination from cache
   void setActivitiesByDestination(String destinationId) {
     _activities = _activitiesByDestination[destinationId] ?? [];
+    _totalActivitiesCount = _activities.length;
     _errorMessage = _activities.isEmpty ? "No activities found for destination $destinationId" : null;
     notifyListeners();
   }
@@ -155,6 +172,41 @@ class ActivityProvider with ChangeNotifier {
     _activities.clear();
     selectedActivity = null;
     _errorMessage = null;
+    _searchQuery = "";
+    _totalActivitiesCount = 0;
+    notifyListeners();
+  }
+
+  /// Set search query and apply filter
+  void setSearchQuery(String query) {
+    _searchQuery = query.toLowerCase();
+    _applyFiltersAndPagination();
+  }
+
+  /// Apply filters and update the _activities list
+  void _applyFiltersAndPagination() {
+    List<Activity> filtered = List.from(allActivities);
+
+    // Filter by search query
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((a) {
+        final name = a.getName(const Locale("fr")).toLowerCase();
+        final title = (a.title ?? "").toLowerCase();
+        return name.contains(_searchQuery) || title.contains(_searchQuery);
+      }).toList();
+    }
+
+    _activities = filtered;
+    _totalActivitiesCount = filtered.length;
+
+    notifyListeners();
+  }
+
+  /// Clear search and show all activities
+  void clearSearch() {
+    _searchQuery = "";
+    _activities = List.from(allActivities);
+    _totalActivitiesCount = allActivities.length;
     notifyListeners();
   }
 }

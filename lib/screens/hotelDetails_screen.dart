@@ -108,7 +108,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 : const SizedBox.shrink()),
           ),
 
-          // Back button
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
@@ -124,7 +123,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
             ),
           ),
 
-          // Details card
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -142,7 +140,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hotel Name
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -160,7 +157,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                     ),
                     const SizedBox(height: 5),
 
-                    // Rating stars
                     Text(
                       _buildStarRating(widget.hotel.categoryCode ?? 0),
                       style: const TextStyle(

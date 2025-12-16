@@ -1,10 +1,13 @@
+// lib/screens/splash_screen.dart
 import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:CarthagoGuide/providers/activity_provider.dart';
 import 'package:CarthagoGuide/providers/destination_provider.dart';
+import 'package:CarthagoGuide/providers/guestHouse_provider.dart';
 import 'package:CarthagoGuide/providers/hotel_provider.dart';
 import 'package:CarthagoGuide/providers/restaurant_provider.dart';
-import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,20 +42,21 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward().then((_) {
       Future.delayed(const Duration(milliseconds: 700), () {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const MainScreenContainer(),
-            transitionsBuilder: (_, a, __, c) =>
-                FadeTransition(opacity: a, child: c),
-          ),
-        );
+        if (mounted) {
+          context.go('/home');
+        }
       });
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<DestinationProvider>(context, listen: false).fetchDestinations();
-      Provider.of<HotelProvider>(context, listen: false).fetchAllHotels();
-      Provider.of<RestaurantProvider>(context, listen: false).fetchRestaurants();
 
+    // Fetch initial data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<DestinationProvider>(context, listen: false).fetchDestinations();
+        Provider.of<HotelProvider>(context, listen: false).fetchAllHotels();
+        Provider.of<RestaurantProvider>(context, listen: false).fetchRestaurants();
+        Provider.of<GuestHouseProvider>(context, listen: false).fetchMaisons();
+        Provider.of<ActivityProvider>(context, listen: false).fetchAllActivities();
+      }
     });
   }
 

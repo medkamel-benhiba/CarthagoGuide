@@ -30,7 +30,6 @@ class ThemeProvider with ChangeNotifier {
   int _currentIndex = 0;
 
   final List<AppTheme> _themes = [
-    // Theme 1: Mediterranean
     AppTheme(
       primary: const Color(0xFF2B7EA8),
       secondary: const Color(0xFF122034),

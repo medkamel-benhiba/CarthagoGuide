@@ -1,34 +1,67 @@
-// artisanat_provider.dart
 import 'package:flutter/material.dart';
 import '../models/artisanat.dart';
 import '../services/api_service.dart';
 
 class ArtisanatProvider with ChangeNotifier {
-  final ApiService apiService;
+  final ApiService _apiService = ApiService();
 
-  ArtisanatProvider({required this.apiService});
-
+  List<Artisanat> _allArtisanats = [];
   List<Artisanat> _artisanats = [];
   Artisanat? _selectedArtisanat;
   bool _isLoading = false;
   String? _error;
+  String _searchQuery = "";
 
   List<Artisanat> get artisanats => _artisanats;
+  List<Artisanat> get allArtisanats => _allArtisanats;
   Artisanat? get selectedArtisanat => _selectedArtisanat;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  String get searchQuery => _searchQuery;
 
   Future<void> fetchArtisanats() async {
     _setLoading(true);
     try {
-      _artisanats = await apiService.getArtisanat();
+      _allArtisanats = await _apiService.getArtisanat();
+      _artisanats = List.from(_allArtisanats); // Initialize with all artisanats
       _error = null;
     } catch (e) {
+      _allArtisanats = [];
       _artisanats = [];
       _error = e.toString();
     } finally {
       _setLoading(false);
     }
+  }
+
+  /// Set search query and filter artisanats
+  void setSearchQuery(String query, Locale locale) {
+    _searchQuery = query.toLowerCase();
+    _applyFilters(locale);
+  }
+
+  /// Clear search
+  void clearSearch(Locale locale) {
+    _searchQuery = "";
+    _applyFilters(locale);
+  }
+
+  /// Apply filters
+  void _applyFilters(Locale locale) {
+    List<Artisanat> filtered = List.from(_allArtisanats);
+
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((artisanat) {
+        final name = artisanat.getName(locale).toLowerCase();
+        final description = artisanat.getDescription(locale).toLowerCase();
+
+        return name.contains(_searchQuery) ||
+            description.contains(_searchQuery);
+      }).toList();
+    }
+
+    _artisanats = filtered;
+    notifyListeners();
   }
 
   Future<void> fetchArtisanatBySlug(String slug) async {
@@ -38,7 +71,7 @@ class ArtisanatProvider with ChangeNotifier {
 
     try {
       // First, try to find in existing artisanats list
-      final existingArtisanat = _artisanats.firstWhere(
+      final existingArtisanat = _allArtisanats.firstWhere(
             (artisanat) => artisanat.slug == slug,
         orElse: () => Artisanat(
           id: '',
@@ -67,9 +100,7 @@ class ArtisanatProvider with ChangeNotifier {
       if (existingArtisanat.id.isNotEmpty) {
         _selectedArtisanat = existingArtisanat;
       } else {
-        // If not found in list, fetch from API
-        // You'll need to add this method to your ApiService
-        _selectedArtisanat = await apiService.getArtisanatBySlug(slug);
+        _selectedArtisanat = await _apiService.getArtisanatBySlug(slug);
       }
     } catch (e) {
       _error = e.toString();
@@ -90,6 +121,16 @@ class ArtisanatProvider with ChangeNotifier {
   // Reset error state
   void clearError() {
     _error = null;
+    notifyListeners();
+  }
+
+  // Force refresh
+  void forceRefresh() {
+    _allArtisanats.clear();
+    _artisanats.clear();
+    _selectedArtisanat = null;
+    _error = null;
+    _searchQuery = "";
     notifyListeners();
   }
 

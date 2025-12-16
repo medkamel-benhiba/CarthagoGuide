@@ -1,6 +1,7 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/providers/event_provider.dart';
 import 'package:CarthagoGuide/screens/eventDetails_screen.dart';
+import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:CarthagoGuide/widgets/event_card.dart';
 import 'package:CarthagoGuide/widgets/hotels/filters/filter_section.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
@@ -8,15 +9,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class EventsScreen extends StatefulWidget {
-  final VoidCallback? onMenuTap;
-
-  const EventsScreen({super.key, this.onMenuTap});
+  const EventsScreen({super.key});
 
   @override
   State<EventsScreen> createState() => _EventsScreenState();
 }
 
 class _EventsScreenState extends State<EventsScreen> {
+  void _toggleDrawer() {
+    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
+    containerState?.toggleDrawer();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -36,7 +40,7 @@ class _EventsScreenState extends State<EventsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: theme.text),
-          onPressed: widget.onMenuTap,
+          onPressed: _toggleDrawer,
         ),
         title: Text(
           "Évènements",
@@ -47,25 +51,29 @@ class _EventsScreenState extends State<EventsScreen> {
       body: Consumer<EventProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
+            return Center(
+              child: CircularProgressIndicator(color: theme.primary),
             );
           }
 
           if (provider.errorMessage != null) {
             return Center(
-              child: Text(
-                provider.errorMessage!,
-                style: TextStyle(color: theme.text),
-              ),
-            );
-          }
-
-          if (provider.events.isEmpty) {
-            return Center(
-              child: Text(
-                "Aucun événement disponible",
-                style: TextStyle(color: theme.text),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    provider.errorMessage!,
+                    style: TextStyle(color: theme.text),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => provider.fetchEvents(),
+                    child: Text('Réessayer', style: TextStyle(color: theme.primary)),
+                  ),
+                ],
               ),
             );
           }
@@ -79,8 +87,14 @@ class _EventsScreenState extends State<EventsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SearchBarWidget(theme: theme),
+                  SearchBarWidget(
+                    theme: theme,
+                    onChanged: (query) {
+                      provider.setSearchQuery(query);
+                    },
+                  ),
                   const SizedBox(height: 25),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -92,42 +106,78 @@ class _EventsScreenState extends State<EventsScreen> {
                           fontSize: 16,
                         ),
                       ),
-                      //FilterSection(theme: theme, type: FilterType.basic),
                     ],
                   ),
                   const SizedBox(height: 15),
 
-                  /// EVENTS LIST VIEW
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: events.length,
-                    itemBuilder: (context, index) {
-                      final event = events[index];
+                  // Empty state
+                  if (events.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 50.0),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.event_busy,
+                              size: 64,
+                              color: theme.text.withOpacity(0.3),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Aucun événement trouvé",
+                              style: TextStyle(
+                                color: theme.text.withOpacity(0.6),
+                                fontSize: 16,
+                              ),
+                            ),
+                            if (provider.searchQuery.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () => provider.clearSearch(),
+                                child: Text(
+                                  "Effacer la recherche",
+                                  style: TextStyle(color: theme.primary),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 15),
-                        child: EventCardWidget(
-                          theme: theme,
-                          title: event.title,
-                          location: event.address ?? "Lieu non spécifié",
-                          imgUrl: event.cover ?? "",
-                          date: event.startDate ?? "",
-                          onTap: () {
-                            Navigator.push(
+                  /// EVENTS LIST VIEW
+                  if (events.isNotEmpty)
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: events.length,
+                      itemBuilder: (context, index) {
+                        final event = events[index];
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 15),
+                          child: EventCardWidget(
+                            theme: theme,
+                            title: event.title,
+                            location: event.address ?? "Lieu non spécifié",
+                            imgUrl: event.cover ?? "",
+                            date: event.startDate ?? "",
+                            onTap: () {
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      EventDetailsScreen(
-                                        event: event,
-                                      ),
-                                )
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                                  builder: (context) => EventDetailsScreen(
+                                    event: event,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

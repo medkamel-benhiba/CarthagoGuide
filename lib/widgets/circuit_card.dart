@@ -42,7 +42,7 @@ class CircuitCardWidget extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(20),
                 ),
-                child: Image.asset(
+                child: Image.network(
                   imgUrl,
                   width: double.infinity,
                   fit: BoxFit.cover,

@@ -11,7 +11,7 @@ class FestivalProvider with ChangeNotifier {
   /// All fetched festivals
   List<Festival> allFestivals = [];
 
-  /// Current displayed festivals
+  /// Current displayed festivals (filtered)
   List<Festival> _festivals = [];
   List<Festival> get festivals => _festivals;
 
@@ -25,6 +25,8 @@ class FestivalProvider with ChangeNotifier {
 
   Festival? selectedFestival;
   String? error;
+  String _searchQuery = "";
+  String get searchQuery => _searchQuery;
 
   /// Flag to track if all festivals have been fetched
   bool _allFestivalsFetched = false;
@@ -50,8 +52,12 @@ class FestivalProvider with ChangeNotifier {
         _festivalsByDestination.putIfAbsent(destId, () => []);
         _festivalsByDestination[destId]!.add(festival);
       }
+
+      // Initialize _festivals with all festivals
+      _festivals = List.from(allFestivals);
     } catch (e) {
       allFestivals = [];
+      _festivals = [];
       _allFestivalsFetched = false; // Allow retry on error
       print("Error fetching all festivals: $e");
     }
@@ -70,8 +76,9 @@ class FestivalProvider with ChangeNotifier {
     if (refresh) {
       _currentPage = 1;
       _festivals.clear();
+      allFestivals.clear();
       _hasMore = true;
-      _allFestivalsFetched = false; // Reset the flag on refresh
+      _allFestivalsFetched = false;
     }
 
     try {
@@ -81,9 +88,6 @@ class FestivalProvider with ChangeNotifier {
       if (newFestivals.isEmpty) {
         _hasMore = false;
       } else {
-        _festivals.addAll(newFestivals);
-        _currentPage++;
-
         // Update cache with new festivals, avoiding duplicates
         for (var festival in newFestivals) {
           final destId = festival.destinationId?.toString() ?? 'unknown';
@@ -101,6 +105,11 @@ class FestivalProvider with ChangeNotifier {
             allFestivals.add(newFestival);
           }
         }
+
+        _currentPage++;
+
+        // Apply current filters after fetching
+        _applyFilters(const Locale("fr"));
       }
       error = null;
     } catch (e, stackTrace) {
@@ -111,6 +120,38 @@ class FestivalProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Set search query and filter festivals
+  void setSearchQuery(String query, Locale locale) {
+    _searchQuery = query.toLowerCase();
+    _applyFilters(locale);
+  }
+
+  /// Clear search
+  void clearSearch(Locale locale) {
+    _searchQuery = "";
+    _applyFilters(locale);
+  }
+
+  /// Apply filters
+  void _applyFilters(Locale locale) {
+    List<Festival> filtered = List.from(allFestivals);
+
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((festival) {
+        final name = festival.getName(locale).toLowerCase();
+        final description = festival.getDescription(locale).toLowerCase();
+        final destination = festival.getDestinationName(locale).toLowerCase();
+
+        return name.contains(_searchQuery) ||
+            description.contains(_searchQuery) ||
+            destination.contains(_searchQuery);
+      }).toList();
+    }
+
+    _festivals = filtered;
+    notifyListeners();
   }
 
   /// Get festivals by destination from cache
@@ -153,6 +194,9 @@ class FestivalProvider with ChangeNotifier {
     _festivalsByDestination.clear();
     allFestivals.clear();
     _festivals.clear();
+    _searchQuery = "";
+    _currentPage = 1;
+    _hasMore = true;
     notifyListeners();
   }
 }

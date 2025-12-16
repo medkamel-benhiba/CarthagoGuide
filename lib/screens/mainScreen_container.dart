@@ -1,39 +1,32 @@
 import 'package:CarthagoGuide/constants/theme.dart';
-import 'package:CarthagoGuide/providers/destination_provider.dart';
 import 'package:CarthagoGuide/providers/guestHouse_provider.dart';
 import 'package:CarthagoGuide/providers/hotel_provider.dart';
 import 'package:CarthagoGuide/providers/restaurant_provider.dart';
-import 'package:CarthagoGuide/screens/activities_screen.dart';
-import 'package:CarthagoGuide/screens/circuits_screen.dart';
-import 'package:CarthagoGuide/screens/cultures_screen.dart';
-import 'package:CarthagoGuide/screens/destinations_screen.dart';
-import 'package:CarthagoGuide/screens/events_screen.dart';
-import 'package:CarthagoGuide/screens/guestHouse_screen.dart';
-import 'package:CarthagoGuide/screens/home_screen.dart';
-import 'package:CarthagoGuide/screens/hotels_screen.dart';
-import 'package:CarthagoGuide/screens/restaurants_screen.dart';
-import 'package:CarthagoGuide/screens/sponsor_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:io' show Platform;
 
 class MainScreenContainer extends StatefulWidget {
-  const MainScreenContainer({super.key});
+  final Widget child;
+
+  const MainScreenContainer({
+    super.key,
+    required this.child,
+  });
 
   @override
-  State<MainScreenContainer> createState() => _MainScreenContainerState();
+  State<MainScreenContainer> createState() => MainScreenContainerState();
 }
 
-class _MainScreenContainerState extends State<MainScreenContainer>
+class MainScreenContainerState extends State<MainScreenContainer>
     with SingleTickerProviderStateMixin {
   late AnimationController _drawerController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _slideAnimation;
   bool isDrawerOpen = false;
-
-  late Widget _currentScreen;
 
   @override
   void initState() {
@@ -48,22 +41,10 @@ class _MainScreenContainerState extends State<MainScreenContainer>
     _slideAnimation = Tween<double>(begin: 0.0, end: 250.0).animate(
       CurvedAnimation(parent: _drawerController, curve: Curves.easeOutCubic),
     );
-
-    _currentScreen = HomeScreen(
-      onMenuTap: toggleDrawer,
-      onNavigateToDestinations: _navigateToDestinations,
-      onNavigateToHotels: _navigateToHotels,
-      onNavigateToRestaurants: _navigateToRestaurants,
-      onNavigateToCircuits: _navigateToCircuits,
-    );
-
-
   }
 
   void toggleDrawer() {
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     if (_drawerController.isDismissed) {
       _drawerController.forward();
@@ -78,34 +59,6 @@ class _MainScreenContainerState extends State<MainScreenContainer>
     }
   }
 
-  void _navigateToDestinations() {
-    _switchScreen(DestinationScreen(onMenuTap: toggleDrawer));
-  }
-
-  void _navigateToHotels() {
-    Provider.of<HotelProvider>(context, listen: false).clearFilters();
-    _switchScreen(HotelsScreen(onMenuTap: toggleDrawer));
-  }
-
-  void _navigateToRestaurants() {
-    Provider.of<RestaurantProvider>(context, listen: false).clearFilters();
-    _switchScreen(RestaurantScreen(onMenuTap: toggleDrawer));
-  }
-
-  void _navigateToCircuits() {
-    _switchScreen(CircuitScreen(onMenuTap: toggleDrawer));
-  }
-
-  void _switchScreen(Widget newScreen) {
-    setState(() {
-      _currentScreen = newScreen;
-    });
-    if (isDrawerOpen) {
-      toggleDrawer();
-    }
-  }
-
-
   @override
   void dispose() {
     _drawerController.dispose();
@@ -118,16 +71,28 @@ class _MainScreenContainerState extends State<MainScreenContainer>
       return false;
     }
 
+    // Check if we're on home screen
+    final currentLocation = GoRouterState.of(context).matchedLocation;
+    if (currentLocation != '/home') {
+      context.go('/home');
+      return false;
+    }
+
     if (Platform.isAndroid || Platform.isFuchsia) {
       final shouldExit = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: theme.background,
           surfaceTintColor: theme.CardBG,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           title: Text(
             'Quitter l\'application ?',
-            style: TextStyle(color: theme.text, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: theme.text,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: Text(
             'Êtes-vous sûr de vouloir quitter Carthago Guide ?',
@@ -135,7 +100,7 @@ class _MainScreenContainerState extends State<MainScreenContainer>
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // Stay in app
+              onPressed: () => Navigator.of(context).pop(false),
               child: Text(
                 'Annuler',
                 style: TextStyle(color: theme.primary),
@@ -154,14 +119,11 @@ class _MainScreenContainerState extends State<MainScreenContainer>
           ],
         ),
       );
-
       return false;
-
     }
 
     return true;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +138,6 @@ class _MainScreenContainerState extends State<MainScreenContainer>
             CustomDrawerMenu(
               onThemeSwitch: toggleDrawer,
               toggleDrawer: toggleDrawer,
-              switchScreen: _switchScreen,
             ),
             AnimatedBuilder(
               animation: _drawerController,
@@ -186,22 +147,24 @@ class _MainScreenContainerState extends State<MainScreenContainer>
                     ..translate(_slideAnimation.value)
                     ..scale(_scaleAnimation.value),
                   alignment: Alignment.centerLeft,
-                  child: ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(isDrawerOpen ? 30 : 0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        boxShadow: isDrawerOpen
-                            ? [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 30,
-                            offset: const Offset(-10, 10),
-                          )
-                        ]
-                            : [],
+                  child: GestureDetector(
+                    onTap: isDrawerOpen ? toggleDrawer : null,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(isDrawerOpen ? 30 : 0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          boxShadow: isDrawerOpen
+                              ? [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 30,
+                              offset: const Offset(-10, 10),
+                            )
+                          ]
+                              : [],
+                        ),
+                        child: widget.child,
                       ),
-                      child: _currentScreen,
                     ),
                   ),
                 );
@@ -217,15 +180,19 @@ class _MainScreenContainerState extends State<MainScreenContainer>
 class CustomDrawerMenu extends StatelessWidget {
   final VoidCallback? onThemeSwitch;
   final VoidCallback? toggleDrawer;
-  final void Function(Widget)? switchScreen;
-
 
   const CustomDrawerMenu({
     super.key,
     this.onThemeSwitch,
     this.toggleDrawer,
-    this.switchScreen
   });
+
+  void _navigateAndClose(BuildContext context, String routeName) {
+    toggleDrawer?.call();
+    Future.delayed(const Duration(milliseconds: 100), () {
+      context.go(routeName);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -246,133 +213,95 @@ class CustomDrawerMenu extends StatelessWidget {
               color: textColor,
             ),
           ),
-
           const SizedBox(height: 35),
 
-          //menu items
+          // Menu Items
           DrawerItem(
             icon: Icons.home_outlined,
             label: "Accueil",
             color: textColor,
+            onTap: () => _navigateAndClose(context, '/home'),
+          ),
+          DrawerItem(
+            icon: Icons.place_outlined,
+            label: "Destinations",
+            color: textColor,
+            onTap: () => _navigateAndClose(context, '/destinations'),
+          ),
+          DrawerItem(
+            icon: Icons.hotel,
+            label: "Hôtels",
+            color: textColor,
             onTap: () {
-              switchScreen?.call(HomeScreen(
-                onMenuTap: toggleDrawer,
-                onNavigateToDestinations: () {
-                  switchScreen?.call(DestinationScreen(onMenuTap: toggleDrawer));
-                },
-                onNavigateToHotels: () {
-                  Provider.of<HotelProvider>(context, listen: false).clearFilters();
-                  switchScreen?.call(HotelsScreen(onMenuTap: toggleDrawer));
-                },
-                onNavigateToRestaurants: () {
-                  Provider.of<RestaurantProvider>(context, listen: false).clearFilters();
-                  switchScreen?.call(RestaurantScreen(onMenuTap: toggleDrawer));
-                },
-                onNavigateToCircuits: () {
-                  switchScreen?.call(CircuitScreen(onMenuTap: toggleDrawer));
-                },
-              ));
+              Provider.of<HotelProvider>(context, listen: false).clearFilters();
+              _navigateAndClose(context, '/hotels');
             },
           ),
-
           DrawerItem(
-              icon: Icons.place_outlined,
-              label: "Destinations",
-              color: textColor,
-              onTap: () {
-                switchScreen?.call(DestinationScreen(onMenuTap: toggleDrawer));
-              }
+            icon: Icons.apartment_outlined,
+            label: "Maisons D'Hôte",
+            color: textColor,
+            onTap: () {
+              Provider.of<GuestHouseProvider>(context, listen: false).clearFilters();
+              _navigateAndClose(context, '/guest-houses');
+            },
           ),
-
           DrawerItem(
-              icon: Icons.hotel,
-              label: "Hôtels",
-              color: textColor,
-              onTap: () {
-                Provider.of<HotelProvider>(context, listen: false).clearFilters();
-                switchScreen?.call(HotelsScreen(onMenuTap: toggleDrawer));
-              }
+            icon: Icons.restaurant_menu,
+            label: "Restaurants",
+            color: textColor,
+            onTap: () {
+              Provider.of<RestaurantProvider>(context, listen: false).clearFilters();
+              _navigateAndClose(context, '/restaurants');
+            },
           ),
-
           DrawerItem(
-              icon: Icons.apartment_outlined,
-              label: "Maisons D'Hôte",
-              color: textColor,
-              onTap: () {
-                Provider.of<GuestHouseProvider>(context, listen: false).clearFilters();
-                switchScreen?.call(GuestHouseScreen(onMenuTap: toggleDrawer));
-              }
+            icon: Icons.local_activity_outlined,
+            label: "Activités",
+            color: textColor,
+            onTap: () => _navigateAndClose(context, '/activities'),
           ),
-
           DrawerItem(
-              icon: Icons.restaurant_menu,
-              label: "Restaurants",
-              color: textColor,
-              onTap: () {
-                Provider.of<RestaurantProvider>(context, listen: false).clearFilters();
-                switchScreen?.call(RestaurantScreen(onMenuTap: toggleDrawer));
-              }
+            icon: Icons.event_available_outlined,
+            label: "Évènements",
+            color: textColor,
+            onTap: () => _navigateAndClose(context, '/events'),
           ),
-
           DrawerItem(
-              icon: Icons.local_activity_outlined,
-              label: "Activités",
-              color: textColor,
-              onTap: () {
-                switchScreen?.call(ActivitiesScreen(onMenuTap: toggleDrawer));
-              }
+            icon: Icons.account_balance_outlined,
+            label: "Cultures",
+            color: textColor,
+            onTap: () => _navigateAndClose(context, '/cultures'),
           ),
-
           DrawerItem(
-              icon: Icons.event_available_outlined,
-              label: "Évènements",
-              color: textColor,
-              onTap: () {
-                switchScreen?.call(EventsScreen(onMenuTap: toggleDrawer));
-              }
+            icon: Icons.route_outlined,
+            label: "Circuits",
+            color: textColor,
+            onTap: () => _navigateAndClose(context, '/circuits'),
           ),
-
           DrawerItem(
-              icon: Icons.account_balance_outlined,
-              label: "Cultures",
-              color: textColor,
-              onTap: () {
-                switchScreen?.call(CulturesScreen(onMenuTap: toggleDrawer));
-              }
-          ),
-
-          DrawerItem(
-              icon: Icons.route_outlined,
-              label: "Circuits",
-              color: textColor,
-              onTap: () {
-                switchScreen?.call(CircuitScreen(onMenuTap: toggleDrawer));
-              }
-          ),
-
-          DrawerItem(
-              icon: Icons.star_border,
-              label: "Sponsors",
-              color: textColor,
-              onTap: () {
-                switchScreen?.call(SponsorScreen(onMenuTap: toggleDrawer));
-              }
+            icon: Icons.star_border,
+            label: "Sponsors",
+            color: textColor,
+            onTap: () => _navigateAndClose(context, '/sponsors'),
           ),
 
           const Spacer(flex: 9),
 
-          // ----------------- Language Switch ------------------
+          // Language Switch
           Row(
             children: [
               Icon(Icons.language, color: theme.primary),
               const SizedBox(width: 10),
-              Text("Français",
-                  style: TextStyle(color: theme.primary, fontSize: 18)),
+              Text(
+                "Français",
+                style: TextStyle(color: theme.primary, fontSize: 18),
+              ),
             ],
           ),
           const SizedBox(height: 30),
 
-          // ----------------- Theme Switch Section ------------------
+          // Theme Switch Section
           Text(
             "Choisir Thème",
             style: TextStyle(
@@ -417,7 +346,6 @@ class CustomDrawerMenu extends StatelessWidget {
   }
 }
 
-// items widgets
 class DrawerItem extends StatelessWidget {
   final IconData icon;
   final String label;

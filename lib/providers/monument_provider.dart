@@ -4,19 +4,21 @@ import '../models/monument.dart';
 import '../services/api_service.dart';
 
 class MonumentProvider with ChangeNotifier {
-  final ApiService apiService;
+  final ApiService _apiService = ApiService();
 
-  MonumentProvider({required this.apiService});
-
+  List<Monument> _allMonuments = [];
   List<Monument> _monuments = [];
   Monument? _selectedMonument;
   bool _isLoading = false;
   String? _error;
+  String _searchQuery = "";
 
   List<Monument> get monuments => _monuments;
+  List<Monument> get allMonuments => _allMonuments;
   Monument? get selectedMonument => _selectedMonument;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  String get searchQuery => _searchQuery;
 
   // Fetch all monuments
   Future<void> fetchMonuments({String page = '1'}) async {
@@ -25,14 +27,50 @@ class MonumentProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _monuments = await apiService.getmonument(page);
+      _allMonuments = await _apiService.getmonument(page);
+      _monuments = List.from(_allMonuments); // Initialize with all monuments
     } catch (e) {
       _error = e.toString();
+      _allMonuments = [];
       _monuments = [];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  // Set search query and filter monuments
+  void setSearchQuery(String query, Locale locale) {
+    _searchQuery = query.toLowerCase();
+    _applyFilters(locale);
+  }
+
+  // Clear search
+  void clearSearch(Locale locale) {
+    _searchQuery = "";
+    _applyFilters(locale);
+  }
+
+  // Apply filters
+  void _applyFilters(Locale locale) {
+    List<Monument> filtered = List.from(_allMonuments);
+
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((monument) {
+        final name = monument.getName(locale).toLowerCase();
+        final description = monument.getDescription(locale).toLowerCase();
+        final categories = monument.getCategories(locale).toLowerCase();
+        final destination = monument.getDestinationName(locale).toLowerCase();
+
+        return name.contains(_searchQuery) ||
+            description.contains(_searchQuery) ||
+            categories.contains(_searchQuery) ||
+            destination.contains(_searchQuery);
+      }).toList();
+    }
+
+    _monuments = filtered;
+    notifyListeners();
   }
 
   // Fetch monument details by slug
@@ -43,7 +81,7 @@ class MonumentProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final existingMonument = _monuments.firstWhere(
+      final existingMonument = _allMonuments.firstWhere(
             (monument) => monument.slug == slug,
         orElse: () => Monument(
           id: '',
@@ -63,7 +101,7 @@ class MonumentProvider with ChangeNotifier {
       if (existingMonument.id.isNotEmpty) {
         _selectedMonument = existingMonument;
       } else {
-        _selectedMonument = await apiService.getMonumentBySlug(slug);
+        _selectedMonument = await _apiService.getMonumentBySlug(slug);
       }
     } catch (e) {
       _error = e.toString();
@@ -76,7 +114,12 @@ class MonumentProvider with ChangeNotifier {
 
   // get monuments by destination id
   List<Monument> getMonumentsByDestination(String destinationId) {
-    return _monuments.where((m) => m.destination.id == destinationId).toList();
+    return _allMonuments.where((m) => m.destination.id == destinationId).toList();
+  }
+
+  void setMonumentsByDestination(String destinationId) {
+    _monuments = getMonumentsByDestination(destinationId);
+    notifyListeners();
   }
 
   // Clear selected monument
@@ -88,6 +131,16 @@ class MonumentProvider with ChangeNotifier {
   // Reset error state
   void clearError() {
     _error = null;
+    notifyListeners();
+  }
+
+  // Force refresh
+  void forceRefresh() {
+    _allMonuments.clear();
+    _monuments.clear();
+    _selectedMonument = null;
+    _error = null;
+    _searchQuery = "";
     notifyListeners();
   }
 }

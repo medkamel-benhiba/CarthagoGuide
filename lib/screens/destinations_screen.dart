@@ -1,5 +1,6 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/screens/destinationDetails_screen.dart';
+import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:CarthagoGuide/widgets/animatedSearchBar.dart';
 import 'package:CarthagoGuide/widgets/destination_card.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
@@ -70,15 +71,21 @@ class _SkeletonBoxState extends State<SkeletonBox>
     );
   }
 }
-// --------------------------------------------------------------------------
 
 
-class DestinationScreen extends StatelessWidget {
-  final VoidCallback? onMenuTap;
+class DestinationScreen extends StatefulWidget {
+  const DestinationScreen({super.key});
 
-  const DestinationScreen({super.key, this.onMenuTap});
+  @override
+  State<DestinationScreen> createState() => _DestinationScreenState();
+}
 
-  // --- SKELETON LOADER WIDGET ---
+class _DestinationScreenState extends State<DestinationScreen> {
+  void _toggleDrawer() {
+    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
+    containerState?.toggleDrawer();
+  }
+
   Widget _buildDestinationsSkeleton(AppTheme theme) {
     Widget cardSkeleton = AspectRatio(
       aspectRatio: 0.95,
@@ -148,7 +155,7 @@ class DestinationScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: theme.text),
-          onPressed: onMenuTap,
+            onPressed: _toggleDrawer
         ),
         title: Text(
           "Destinations",

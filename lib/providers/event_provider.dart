@@ -1,51 +1,38 @@
-import 'dart:convert';
+import 'package:CarthagoGuide/models/event.dart';
+import 'package:CarthagoGuide/services/api_service.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import '../models/event.dart';
 
 class EventProvider with ChangeNotifier {
-  final String _baseUrl = "https://backend.tunisiagotravel.com";
+  final ApiService _apiService = ApiService();
 
+  List<Event> _allEvents = [];
   List<Event> _events = [];
   Event? _selectedEvent;
 
   bool _isLoading = false;
   String? _errorMessage;
+  String _searchQuery = "";
 
   List<Event> get events => _events;
+  List<Event> get allEvents => _allEvents;
   Event? get selectedEvent => _selectedEvent;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String get searchQuery => _searchQuery;
 
-  // Fetch all events from API
   Future<void> fetchEvents() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final response = await http.get(Uri.parse('$_baseUrl/utilisateur/allevent'));
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        if (jsonData == null || jsonData['events'] == null) {
-          throw Exception("API returned null data");
-        }
-
-        if (jsonData['events']['data'] is List) {
-          _events = (jsonData['events']['data'] as List)
-              .map((e) => Event.fromJson(e))
-              .toList();
-        } else {
-          throw Exception("Unexpected data format: ${jsonData['events']}");
-        }
-      } else {
-        throw Exception("Failed to fetch events: ${response.statusCode}");
-      }
+      _allEvents = await _apiService.getallevents();
+      _events = List.from(_allEvents); // Initialize with all events
     } catch (e, stackTrace) {
-      debugPrint("Error in fetchEvents: $e");
+      debugPrint("Error in fetchEvents (from ApiService): $e");
       debugPrint("StackTrace: $stackTrace");
       _errorMessage = "Impossible de charger les événements";
+      _allEvents = [];
       _events = [];
     } finally {
       _isLoading = false;
@@ -53,14 +40,46 @@ class EventProvider with ChangeNotifier {
     }
   }
 
-  // Filter events by destinationId
-  List<Event> getEventsByDestination(String destinationId) {
-    return _events.where((event) => event.destinationId == destinationId).toList();
+  // Set search query and filter events
+  void setSearchQuery(String query) {
+    _searchQuery = query.toLowerCase();
+    _applyFilters();
   }
 
-  // Optional: update cache or state when a destination is selected
+  // Clear search
+  void clearSearch() {
+    _searchQuery = "";
+    _events = List.from(_allEvents);
+    notifyListeners();
+  }
+
+  // Apply filters
+  void _applyFilters() {
+    List<Event> filtered = List.from(_allEvents);
+
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((event) {
+        final title = (event.title ?? "").toLowerCase();
+        final address = (event.address ?? "").toLowerCase();
+        final description = (event.description ?? "").toLowerCase();
+
+        return title.contains(_searchQuery) ||
+            address.contains(_searchQuery) ||
+            description.contains(_searchQuery);
+      }).toList();
+    }
+
+    _events = filtered;
+    notifyListeners();
+  }
+
+  // Filter events by destinationId
+  List<Event> getEventsByDestination(String destinationId) {
+    return _allEvents.where((event) => event.destinationId == destinationId).toList();
+  }
+
   void setEventsByDestination(String destinationId) {
-    // Currently nothing extra needed, but you could implement caching here
+    _events = getEventsByDestination(destinationId);
     notifyListeners();
   }
 
@@ -68,13 +87,27 @@ class EventProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      _selectedEvent = _events.firstWhere((event) => event.slug == slug);
+      _selectedEvent = _allEvents.firstWhere((event) => event.slug == slug);
     } catch (e) {
       _selectedEvent = null;
       _errorMessage = "Événement introuvable";
       debugPrint("Erreur fetchEventBySlug: $e");
     }
     _isLoading = false;
+    notifyListeners();
+  }
+
+  void clearSelectedEvent() {
+    _selectedEvent = null;
+    notifyListeners();
+  }
+
+  void forceRefresh() {
+    _allEvents.clear();
+    _events.clear();
+    _selectedEvent = null;
+    _errorMessage = null;
+    _searchQuery = "";
     notifyListeners();
   }
 }

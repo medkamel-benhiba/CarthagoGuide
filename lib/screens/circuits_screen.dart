@@ -1,5 +1,5 @@
 import 'package:CarthagoGuide/screens/circuitDetails_screen.dart';
-import 'package:CarthagoGuide/widgets/circuit_card.dart';
+import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:CarthagoGuide/widgets/circuit_card_ver.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,40 +8,46 @@ import 'package:CarthagoGuide/providers/voyage_provider.dart';
 import 'package:CarthagoGuide/models/voyage.dart';
 
 class CircuitScreen extends StatefulWidget {
-  final VoidCallback? onMenuTap;
-
-  const CircuitScreen({super.key, this.onMenuTap});
+  const CircuitScreen({super.key});
 
   @override
   State<CircuitScreen> createState() => _CircuitScreenState();
 }
 
 class _CircuitScreenState extends State<CircuitScreen> {
+  // Cache for transformed voyage data
+  final Map<String, Map<String, dynamic>> _cardDataCache = {};
+
+  void _toggleDrawer() {
+    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
+    containerState?.toggleDrawer();
+  }
+
   @override
   void initState() {
     super.initState();
-    // Fetch voyages when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<VoyageProvider>().fetchVoyages();
     });
   }
 
-  // Convert Voyage to circuit card data
   Map<String, dynamic> _voyageToCardData(Voyage voyage, Locale locale) {
-    // Calculate a mock progress based on voyage id hash
+    // Use cache to avoid repeated transformations
+    final cacheKey = '${voyage.id}_${locale.languageCode}';
+    if (_cardDataCache.containsKey(cacheKey)) {
+      return _cardDataCache[cacheKey]!;
+    }
+
     final progress = ((voyage.id.hashCode % 100) / 100).clamp(0.4, 0.9);
 
-    // Get the duration from the number field (assuming it represents days)
     final duration = voyage.number.isNotEmpty
         ? '${voyage.number} ${locale.languageCode == 'fr' ? 'jours' : 'jours'}'
         : '3 jours';
 
-    // Extract start and end destinations from the name or use defaults
     final name = voyage.name;
     String startDest = 'Tunis';
     String endDest = 'Various';
 
-    // Try to extract destinations from voyage name
     if (name.contains(' - ')) {
       final parts = name.split(' - ');
       if (parts.length >= 2) {
@@ -57,15 +63,27 @@ class _CircuitScreenState extends State<CircuitScreen> {
       endDest = 'Tabarka';
     }
 
-    return {
+    final cardData = {
       'id': voyage.id,
       'title': name,
       'duration': duration,
       'startDestination': startDest,
       'endDestination': endDest,
-      'image': voyage.images.first ?? 'assets/images/circuit1.jpg',
+      'image': voyage.images.isNotEmpty ? voyage.images.first : 'assets/images/circuit1.jpg',
       'progress': progress,
     };
+
+    _cardDataCache[cacheKey] = cardData;
+    return cardData;
+  }
+
+  void _navigateToDetails(BuildContext context, Voyage voyage) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CircuitDetailsScreen(circuit: voyage),
+      ),
+    );
   }
 
   @override
@@ -73,7 +91,7 @@ class _CircuitScreenState extends State<CircuitScreen> {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     final voyageProvider = Provider.of<VoyageProvider>(context);
     final locale = Localizations.localeOf(context);
-
+    final voyages = voyageProvider.voyages;
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -82,7 +100,7 @@ class _CircuitScreenState extends State<CircuitScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: theme.text),
-          onPressed: widget.onMenuTap,
+          onPressed: _toggleDrawer,
         ),
         title: Text(
           "Circuits",
@@ -116,41 +134,55 @@ class _CircuitScreenState extends State<CircuitScreen> {
           ],
         ),
       )
-          : voyageProvider.voyages.isEmpty
+          : voyages.isEmpty
           ? Center(
         child: Text(
           'Aucun circuit disponible',
           style: TextStyle(color: theme.text, fontSize: 16),
         ),
       )
-          : SingleChildScrollView(
+          : CustomScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Circuits en vedette",
-              style: TextStyle(
-                color: theme.text,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+        slivers: [
+          // Featured circuits section
+          SliverPadding(
+            padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Circuits en vedette",
+                    style: TextStyle(
+                      color: theme.text,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            SizedBox(
+          ),
+
+          // Horizontal featured list - optimized with builder
+          SliverToBoxAdapter(
+            child: SizedBox(
               height: 200,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: voyageProvider.voyages.length > 3 ? 3 : voyageProvider.voyages.length,
+                padding: const EdgeInsets.only(left: 20, right: 20),
+                itemCount: voyages.length > 3 ? 3 : voyages.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 15),
+                // Add cacheExtent for better performance
+                cacheExtent: 500,
                 itemBuilder: (context, index) {
-                  final voyage = voyageProvider.voyages[index];
+                  final voyage = voyages[index];
                   final circuit = _voyageToCardData(voyage, locale);
 
                   return SizedBox(
                     width: 240,
-                    child: CircuitCard(
+                    child: CircuitCardWithGlass(
                       theme: theme,
                       title: circuit["title"]!,
                       duration: circuit["duration"]!,
@@ -158,38 +190,35 @@ class _CircuitScreenState extends State<CircuitScreen> {
                       endDestination: circuit["endDestination"]!,
                       imgUrl: circuit["image"]!,
                       progress: circuit["progress"] ?? 0.5,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CircuitDetailsScreen(
-                              circuit: voyage,
-                            ),
-                          ),
-                        );
-                      },
+                      onTap: () => _navigateToDetails(context, voyage),
                     ),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 25),
-            Text(
-              "Tous les circuits",
-              style: TextStyle(
-                color: theme.text,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+          ),
+
+          SliverPadding(
+            padding: const EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 12),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                "Tous les circuits",
+                style: TextStyle(
+                  color: theme.text,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            ListView.separated(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              itemCount: voyageProvider.voyages.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 15),
+          ),
+
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverList.separated(
+              itemCount: voyages.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 15),
               itemBuilder: (context, index) {
-                final voyage = voyageProvider.voyages[index];
+                final voyage = voyages[index];
                 final circuit = _voyageToCardData(voyage, locale);
 
                 return SizedBox(
@@ -202,23 +231,22 @@ class _CircuitScreenState extends State<CircuitScreen> {
                     endDestination: circuit["endDestination"]!,
                     imgUrl: circuit["image"]!,
                     progress: circuit["progress"] ?? 0.5,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CircuitDetailsScreen(
-                            circuit: voyage,
-                          ),
-                        ),
-                      );
-                    },
+                    onTap: () => _navigateToDetails(context, voyage),
                   ),
                 );
               },
             ),
-          ],
-        ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
+        ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _cardDataCache.clear();
+    super.dispose();
   }
 }

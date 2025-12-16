@@ -1,4 +1,5 @@
 import 'package:CarthagoGuide/screens/hotelDetails_screen.dart';
+import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:CarthagoGuide/widgets/hotels/filters/filter_section.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,20 +12,41 @@ import 'package:CarthagoGuide/widgets/skeleton_box.dart';
 
 
 class HotelsScreen extends StatefulWidget {
-  final VoidCallback? onMenuTap;
-
-  const HotelsScreen({super.key, this.onMenuTap});
+  const HotelsScreen({super.key});
 
   @override
   State<HotelsScreen> createState() => _HotelsScreenState();
 }
 
 class _HotelsScreenState extends State<HotelsScreen> {
+  void _toggleDrawer() {
+    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
+    containerState?.toggleDrawer();
+  }
+
   int _currentPage = 1;
+  late FixedExtentScrollController _scrollController;
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    _scrollController = FixedExtentScrollController(initialItem: 1);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _goToPage(int page, HotelProvider hotelProvider) {
     setState(() => _currentPage = page);
     hotelProvider.loadPage(page);
+    if (_scrollController.hasClients) {
+      _scrollController.jumpToItem(1);
+    }
   }
 
   Widget _buildHotelsSkeletonList(AppTheme theme) {
@@ -33,7 +55,6 @@ class _HotelsScreenState extends State<HotelsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image Placeholder
           SkeletonBox(
             theme: theme,
             width: double.infinity,
@@ -41,7 +62,6 @@ class _HotelsScreenState extends State<HotelsScreen> {
             radius: 15,
           ),
           const SizedBox(height: 10),
-          // Title Line
           SkeletonBox(
             theme: theme,
             width: double.infinity,
@@ -88,7 +108,7 @@ class _HotelsScreenState extends State<HotelsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: theme.text),
-          onPressed: widget.onMenuTap,
+          onPressed: _toggleDrawer,
         ),
         title: Text(
           "Hôtels",
@@ -148,34 +168,41 @@ class _HotelsScreenState extends State<HotelsScreen> {
                             ),
                             const SizedBox(height: 15),
 
-                            // 🏨 Hotel List
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: hotelsList.length,
-                              itemBuilder: (context, index) {
-                                final hotel = hotelsList[index];
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.55,
+                              child: ListWheelScrollView.useDelegate(
+                                controller: _scrollController,
+                                itemExtent: 220,
+                                perspective: 0.003,
+                                clipBehavior: Clip.none,
 
-                                return HotelCardWidget(
-                                  theme: theme,
-                                  title: hotel.name,
-                                  destination:
-                                  hotel.destinationName ?? "Destination inconnue",
-                                  imgUrl: hotel.images?.first ??
-                                      hotel.cover ??
-                                      "assets/images/placeholder.jpg",
-                                  rating: hotel.categoryCode?.toDouble() ?? 4.0,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            HotelDetailsScreen(hotel: hotel),
-                                      ),
+                                childDelegate: ListWheelChildBuilderDelegate(
+                                  childCount: hotelsList.length,
+                                  builder: (context, index) {
+                                    final hotel = hotelsList[index];
+
+                                    return HotelCardWidget(
+                                      theme: theme,
+                                      title: hotel.name,
+                                      destination:
+                                      hotel.destinationName ?? "Destination inconnue",
+                                      imgUrl: hotel.images?.first ??
+                                          hotel.cover ??
+                                          "assets/images/placeholder.jpg",
+                                      rating: hotel.categoryCode?.toDouble() ?? 4.0,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                HotelDetailsScreen(hotel: hotel),
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
-                                );
-                              },
+                                ),
+                              ),
                             ),
 
                             // 🔵 PAGINATION

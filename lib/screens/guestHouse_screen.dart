@@ -1,5 +1,6 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/screens/guestHouseDetails_screen.dart';
+import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:CarthagoGuide/widgets/hotels/filters/filter_section.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_card.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
@@ -10,9 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:CarthagoGuide/providers/guestHouse_provider.dart';
 
 class GuestHouseScreen extends StatefulWidget {
-  final VoidCallback? onMenuTap;
-
-  const GuestHouseScreen({super.key, this.onMenuTap});
+  const GuestHouseScreen({super.key});
 
   @override
   State<GuestHouseScreen> createState() => _GuestHouseScreenState();
@@ -20,6 +19,11 @@ class GuestHouseScreen extends StatefulWidget {
 
 class _GuestHouseScreenState extends State<GuestHouseScreen> {
   int _currentPage = 1;
+  void _toggleDrawer() {
+    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
+    containerState?.toggleDrawer();
+  }
+
 
   @override
   void initState() {
@@ -34,9 +38,6 @@ class _GuestHouseScreenState extends State<GuestHouseScreen> {
     provider.loadPage(page);
   }
 
-  // -------------------------------------------------------------
-  // SKELETON LOADER
-  // -------------------------------------------------------------
   Widget _buildSkeletonLoader(AppTheme theme) {
     Widget cardSkeleton = Padding(
       padding: const EdgeInsets.only(bottom: 15),
@@ -98,7 +99,7 @@ class _GuestHouseScreenState extends State<GuestHouseScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: theme.text),
-          onPressed: widget.onMenuTap,
+          onPressed: _toggleDrawer,
         ),
         title: Text(
           "Maisons d'Hôte",

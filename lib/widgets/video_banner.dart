@@ -43,12 +43,12 @@ class _VideoBannerState extends State<VideoBanner> {
           borderRadius: BorderRadius.circular(20),
           child: _controller.value.isInitialized
               ? SizedBox(
-            height: 180,
+            height: 170,
             width: double.infinity,
             child: VideoPlayer(_controller),
           )
               : Container(
-            height: 180,
+            height: 170,
             width: double.infinity,
             color: Colors.black12,
           ),
@@ -56,7 +56,7 @@ class _VideoBannerState extends State<VideoBanner> {
 
         // GRADIENT OVERLAY
         Container(
-          height: 180,
+          height: 170,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             gradient: LinearGradient(
@@ -102,8 +102,6 @@ class _VideoBannerState extends State<VideoBanner> {
             ],
           ),
         ),
-
-        // PLAY BUTTON (non functional visual)
 
       ],
     );

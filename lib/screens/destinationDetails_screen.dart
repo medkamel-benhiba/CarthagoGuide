@@ -48,6 +48,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
   @override
   void initState() {
     super.initState();
+
     // Filter hotels by destination from all hotels
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final hotelProvider = Provider.of<HotelProvider>(context, listen: false);
