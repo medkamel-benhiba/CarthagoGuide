@@ -1,0 +1,55 @@
+{
+  "app_name": "CarthagoGuide",
+  "home": {
+    "search_placeholder": "Search destinations, hotels...",
+    "categories": {
+      "destinations": "Destinations",
+      "hotels": "Hotels",
+      "restaurants": "Restaurants",
+      "circuits": "Tours",
+      "chatbot": "Assistant"
+    },
+    "sections": {
+      "destinations": "Destinations",
+      "circuits": "Tours",
+      "events": "Events",
+      "gallery": "Gallery"
+    },
+    "experiences": {
+      "adventure": "Adventure",
+      "kairouan_vibes": "Kairouan Vibes",
+      "local_food": "Local Food",
+      "desert_trip": "Desert Trip",
+      "beach_day": "Beach Day",
+      "museums": "Museums"
+    }
+  },
+  "common": {
+    "see_more": "See more",
+    "retry": "Retry",
+    "loading": "Loading...",
+    "no_data": "No data available",
+    "error": "Error",
+    "check_connection": "Check your internet connection and try again."
+  },
+  "destinations": {
+    "title": "Destinations",
+    "nearby": "Nearby"
+  },
+  "circuits": {
+    "title": "Tours",
+    "days": "days",
+    "duration": "Duration"
+  },
+  "events": {
+    "title": "Events",
+    "no_title": "Untitled event",
+    "no_location": "Location not specified",
+    "no_date": "Date not specified"
+  },
+  "errors": {
+    "fetch_failed": "Failed to load data",
+    "network_error": "Connection error",
+    "empty_list": "No items available"
+  }
+}

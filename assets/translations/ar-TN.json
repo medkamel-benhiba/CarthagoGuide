@@ -1,0 +1,55 @@
+{
+  "app_name": "دليل قرطاج",
+  "home": {
+    "search_placeholder": "البحث عن الوجهات، الفنادق...",
+    "categories": {
+      "destinations": "الوجهات",
+      "hotels": "الفنادق",
+      "restaurants": "المطاعم",
+      "circuits": "الجولات",
+      "chatbot": "المساعد"
+    },
+    "sections": {
+      "destinations": "الوجهات",
+      "circuits": "الجولات",
+      "events": "الفعاليات",
+      "gallery": "المعرض"
+    },
+    "experiences": {
+      "adventure": "المغامرة",
+      "kairouan_vibes": "أجواء القيروان",
+      "local_food": "الطعام المحلي",
+      "desert_trip": "رحلة الصحراء",
+      "beach_day": "يوم على الشاطئ",
+      "museums": "المتاحف"
+    }
+  },
+  "common": {
+    "see_more": "عرض المزيد",
+    "retry": "إعادة المحاولة",
+    "loading": "جاري التحميل...",
+    "no_data": "لا توجد بيانات متاحة",
+    "error": "خطأ",
+    "check_connection": "تحقق من اتصالك بالإنترنت وحاول مرة أخرى."
+  },
+  "destinations": {
+    "title": "الوجهات",
+    "nearby": "قريب منك"
+  },
+  "circuits": {
+    "title": "الجولات",
+    "days": "أيام",
+    "duration": "المدة"
+  },
+  "events": {
+    "title": "الفعاليات",
+    "no_title": "حدث بدون عنوان",
+    "no_location": "الموقع غير محدد",
+    "no_date": "التاريخ غير محدد"
+  },
+  "errors": {
+    "fetch_failed": "فشل تحميل البيانات",
+    "network_error": "خطأ في الاتصال",
+    "empty_list": "لا توجد عناصر متاحة"
+  }
+}
