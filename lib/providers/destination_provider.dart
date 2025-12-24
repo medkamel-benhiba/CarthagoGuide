@@ -29,7 +29,7 @@ class DestinationProvider extends ChangeNotifier {
       _destinations = await _apiService.getDestinations();
     } catch (e) {
       _destinations = [];
-      _error = "Aucune destination disponible";
+      _error = "Vérifiez votre connexion Internet et réessayez.";
       debugPrint(_error);
     }
 

@@ -2,6 +2,7 @@ import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:math' as math;
 
 final List<Map<String, String>> allSponsors = [
@@ -269,7 +270,7 @@ class _SponsorScreenState extends State<SponsorScreen> {
           onPressed: _toggleDrawer,
         ),
         title: Text(
-          "Nos Partenaires",
+          'sponsors.title'.tr(),
           style: TextStyle(color: theme.primary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -329,7 +330,7 @@ class _SponsorScreenState extends State<SponsorScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            "Merci à nos partenaires",
+                            'sponsors.thanks'.tr(),
                             style: TextStyle(
                               color: theme.text,
                               fontSize: 20,
@@ -339,7 +340,7 @@ class _SponsorScreenState extends State<SponsorScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "Ils nous font confiance et soutiennent notre mission",
+                            'sponsors.support_message'.tr(),
                             style: TextStyle(
                               color: theme.text.withOpacity(0.6),
                               fontSize: 14,
@@ -413,7 +414,7 @@ class _SponsorScreenState extends State<SponsorScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            "Vous souhaitez devenir partenaire ?",
+                            'sponsors.become_partner'.tr(),
                             style: TextStyle(
                               color: theme.text,
                               fontSize: 16,
@@ -423,7 +424,7 @@ class _SponsorScreenState extends State<SponsorScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "Contactez-nous pour en savoir plus",
+                            'sponsors.contact_us'.tr(),
                             style: TextStyle(
                               color: theme.text.withOpacity(0.75),                              fontSize: 14,
                             ),

@@ -316,7 +316,7 @@ class ChatMessagesList extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 12,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -325,27 +325,6 @@ class ChatMessagesList extends StatelessWidget {
                         theme.secondary.withOpacity(0.15),
                       ],
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: theme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      /*Text(
-                        'Option ${index + 1}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: theme.primary,
-                        ),
-                      ),*/
-                    ],
                   ),
                 ),
                 // Card content

@@ -72,7 +72,6 @@ Future<ChatMessage> getAssistantResponseWithRetry(
         );
       }
 
-      // Wait before retrying
       await Future.delayed(Duration(seconds: retryCount * 2));
     }
   }

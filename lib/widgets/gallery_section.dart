@@ -1,5 +1,6 @@
 import 'package:CarthagoGuide/widgets/gallery_images.dart';
 import 'package:CarthagoGuide/widgets/section_title.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:CarthagoGuide/constants/theme.dart';
 
@@ -99,7 +100,7 @@ class _GallerySectionWidgetState extends State<GallerySectionWidget> with Ticker
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        SectionTitleWidget(title: "Galerie", theme: widget.theme),
+        SectionTitleWidget(title: "details.gallery".tr(), theme: widget.theme),
         const SizedBox(height: 15),
 
         // Top fading image

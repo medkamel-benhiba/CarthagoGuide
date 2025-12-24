@@ -3,6 +3,7 @@ import 'package:CarthagoGuide/models/activity.dart';
 import 'package:CarthagoGuide/widgets/contact_section.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class ActivityDetailsScreen extends StatefulWidget {
@@ -46,11 +47,6 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
       if (widget.activity.cover != null) widget.activity.cover!,
     ];
 
-    final displayPrice = (widget.activity.price == null ||
-        widget.activity.price == "0" ||
-        widget.activity.price == 0)
-        ? "Gratuit"
-        : "${widget.activity.price} TND";
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -111,11 +107,12 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            widget.activity.title ?? "Activité",
+                            widget.activity.getName(Localizations.localeOf(context)),
                             style: TextStyle(
                               color: theme.text,
-                              fontSize: 28,
+                              fontSize: 26,
                               fontWeight: FontWeight.bold,
+                              height: 1.2,
                             ),
                           ),
                         ),
@@ -126,14 +123,14 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                     // LOCATION
                     Row(
                       children: [
-                        Icon(Icons.location_on, color: theme.text, size: 18),
-                        const SizedBox(width: 5),
+                        Icon(Icons.location_on_outlined, color: theme.primary, size: 20),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            widget.activity.address ?? "Tunisie",
+                            widget.activity.getAddress(context.locale) ?? 'details.location_unavailable'.tr(),
                             style: TextStyle(
-                              color: theme.text,
-                              fontSize: 16,
+                              color: theme.text.withOpacity(0.7),
+                              fontSize: 15,
                             ),
                           ),
                         ),
@@ -147,7 +144,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
                     // DESCRIPTION
                     Text(
-                      "Description",
+                      'details.about'.tr(),
                       style: TextStyle(
                         color: theme.text,
                         fontSize: 20,
@@ -157,7 +154,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                     const SizedBox(height: 10),
                     Builder(builder: (context) {
                       final fullText =
-                      _stripHtmlTags(widget.activity.description ?? "");
+                      _stripHtmlTags(widget.activity.getDescription(context.locale) ?? "");
                       final truncatedText =
                       fullText.length > 220 ? fullText.substring(0, 220) : fullText;
 
@@ -183,8 +180,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                                 padding: const EdgeInsets.only(top: 5.0),
                                 child: Text(
                                   _isDescriptionExpanded
-                                      ? "Afficher moins"
-                                      : "Afficher plus",
+                                      ? 'details.show_less'.tr()
+                                      : 'details.show_more'.tr(),
                                   style: TextStyle(
                                     color: theme.primary,
                                     fontSize: 14,
@@ -248,7 +245,7 @@ class _GallerySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Galerie Photos",
+          'details.gallery'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,
@@ -305,7 +302,7 @@ class _ContactSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Contact",
+          'details.contact'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,

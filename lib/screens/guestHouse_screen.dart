@@ -8,7 +8,10 @@ import 'package:CarthagoGuide/widgets/pagination_controls.dart';
 import 'package:CarthagoGuide/widgets/skeleton_box.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:CarthagoGuide/providers/guestHouse_provider.dart';
+import 'package:transformable_list_view/transformable_list_view.dart';
+import 'package:CarthagoGuide/utils/list_transformations.dart';
 
 class GuestHouseScreen extends StatefulWidget {
   const GuestHouseScreen({super.key});
@@ -18,79 +21,65 @@ class GuestHouseScreen extends StatefulWidget {
 }
 
 class _GuestHouseScreenState extends State<GuestHouseScreen> {
-  int _currentPage = 1;
-  void _toggleDrawer() {
-    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
-    containerState?.toggleDrawer();
-  }
-
+  bool _isFetchingMore = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<GuestHouseProvider>(context, listen: false).fetchMaisons();
+      _autoLoadAllPages();
     });
   }
 
-  void _goToPage(int page, GuestHouseProvider provider) {
-    setState(() => _currentPage = page);
-    provider.loadPage(page);
+  Future<void> _autoLoadAllPages() async {
+    final provider = Provider.of<GuestHouseProvider>(context, listen: false);
+
+    if (!provider.hasMorePages && provider.maisons.isNotEmpty) return;
+
+    if (_isFetchingMore) return;
+
+    if (provider.maisons.isEmpty) {
+      await provider.fetchAllGuestHouses();
+    }
+
+    if (mounted) setState(() => _isFetchingMore = true);
+
+    while (provider.hasMorePages && mounted) {
+      await provider.loadMoreFromAPI();
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+
+    if (mounted) setState(() => _isFetchingMore = false);
+  }
+
+  void _toggleDrawer() {
+    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
+    containerState?.toggleDrawer();
   }
 
   Widget _buildSkeletonLoader(AppTheme theme) {
-    Widget cardSkeleton = Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image Placeholder
-          SkeletonBox(
-            theme: theme,
-            width: double.infinity,
-            height: 180,
-            radius: 15,
-          ),
-          const SizedBox(height: 10),
-          // Title Line
-          SkeletonBox(
-            theme: theme,
-            width: double.infinity,
-            height: 20,
-            radius: 4,
-          ),
-          const SizedBox(height: 8),
-          SkeletonBox(
-            theme: theme,
-            width: 150,
-            height: 16,
-            radius: 4,
-          ),
-        ],
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 4,
+      itemBuilder: (context, index) => Padding(
+        padding: const EdgeInsets.only(bottom: 15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SkeletonBox(theme: theme, width: double.infinity, height: 180, radius: 15),
+            const SizedBox(height: 10),
+            SkeletonBox(theme: theme, width: 200, height: 20, radius: 4),
+          ],
+        ),
       ),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: SkeletonBox(theme: theme, width: 120, height: 16, radius: 4),
-        ),
-        const SizedBox(height: 15),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: 5,
-          itemBuilder: (context, index) => cardSkeleton,
-        ),
-      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
+    final locale = context.locale;
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -102,109 +91,99 @@ class _GuestHouseScreenState extends State<GuestHouseScreen> {
           onPressed: _toggleDrawer,
         ),
         title: Text(
-          "Maisons d'Hôte",
+          'guest_houses.title'.tr(),
           style: TextStyle(color: theme.primary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
       body: Consumer<GuestHouseProvider>(
-        builder: (context, maisonProvider, child) {
-          final guestHouses = maisonProvider.maisons;
-          final isLoading = maisonProvider.isLoading;
-          final errorMessage = maisonProvider.errorMessage;
-          final totalCount = maisonProvider.totalMaisonsCount;
+        builder: (context, provider, child) {
+          final bool isLoadingInitial = provider.isLoading && provider.maisons.isEmpty;
+          final bool isLoadingMore = _isFetchingMore && provider.maisons.isNotEmpty;
 
-          if (errorMessage != null) {
-            return Center(
-                child: Text(errorMessage,
-                    style: const TextStyle(color: Colors.red)));
-          }
-
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SearchBarWidget(
-                    theme: theme,
-                    onChanged: (query) {
-                      maisonProvider.setSearchQuery(query);
-                      setState(() => _currentPage = 1);
-                    },
-                  ),
-                  const SizedBox(height: 25),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Résultats ($totalCount)",
-                        style: TextStyle(
-                          color: theme.text.withOpacity(0.6),
-                          fontWeight: FontWeight.w300,
-                          fontSize: 16,
-                        ),
+          return Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SearchBarWidget(
+                  theme: theme,
+                  onChanged: (query) => provider.setSearchQuery(query),
+                ),
+                const SizedBox(height: 25),
+                Row(
+                  children: [
+                    Text(
+                      'activities.results'.tr(namedArgs: {'count': provider.totalMaisonsCount.toString()}),
+                      style: TextStyle(
+                        color: theme.text.withOpacity(0.6),
+                        fontWeight: FontWeight.w300,
+                        fontSize: 16,
                       ),
-                      FilterSection(theme: theme, type: FilterType.guestHouse),
+                    ),
+                    const SizedBox(width: 8),
+                    if (isLoadingMore)
+                      const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    const Spacer(),
+                    FilterSection(theme: theme, type: FilterType.guestHouse),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                Expanded(
+                  child: Column(
+                    children: [
+                      if (isLoadingInitial)
+                        Expanded(child: _buildSkeletonLoader(theme))
+                      else if (provider.maisons.isEmpty)
+                        Expanded(
+                          child: Center(
+                            child: Text('common.check_connection'.tr()),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: TransformableListView.builder(
+                            getTransformMatrix: ListTransformations.getMonumentTransformMatrix,
+                            itemCount: provider.maisons.length,
+                            physics: const BouncingScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              final g = provider.maisons[index];
+                              return HotelCardWidget(
+                                theme: theme,
+                                title: g.getName(locale),
+                                destination: g.getAddress(locale),
+                                imgUrl: g.images.isNotEmpty
+                                    ? g.images.first
+                                    : "https://via.placeholder.com/300x200?text=No+Image",
+                                rating: double.tryParse(g.noteGoogle) ?? 0.0,
+                                isHotel: false,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => GuestHouseDetailsScreen(guestHouse: g),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      const SizedBox(height: 5),
+                      PaginationControls(
+                        totalPages: provider.totalPages,
+                        currentPage: provider.currentPage,
+                        primaryColor: theme.primary,
+                        textColor: theme.text,
+                        isEmptyOrLoading: isLoadingInitial,
+                        onPageChange: (page) => provider.loadPage(page),
+                      ),
                     ],
                   ),
-
-                  const SizedBox(height: 15),
-
-                  if (isLoading) _buildSkeletonLoader(theme),
-
-                  if (!isLoading && guestHouses.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 50.0),
-                      child: Center(
-                        child: Text("Aucune maison d'hôtes trouvée."),
-                      ),
-                    ),
-
-                  if (!isLoading)
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: guestHouses.length,
-                      itemBuilder: (context, index) {
-                        final guesthouse = guestHouses[index];
-                        final rating =
-                            double.tryParse(guesthouse.noteGoogle) ?? 0.0;
-
-                        return HotelCardWidget(
-                          theme: theme,
-                          title: guesthouse.name,
-                          destination: guesthouse.destination.name,
-                          imgUrl: guesthouse.images.isNotEmpty
-                              ? guesthouse.images.first
-                              : "https://via.placeholder.com/300x200?text=No+Image",
-                          rating: rating,
-                          isHotel: false,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    GuestHouseDetailsScreen(guestHouse: guesthouse,),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-
-                  PaginationControls(
-                    totalPages: maisonProvider.totalPages,
-                    currentPage: maisonProvider.currentPage,
-                    primaryColor: theme.primary,
-                    textColor: theme.text,
-                    isEmptyOrLoading: maisonProvider.isLoading || maisonProvider.maisons.isEmpty,
-                    onPageChange: (page) => _goToPage(page, maisonProvider),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },

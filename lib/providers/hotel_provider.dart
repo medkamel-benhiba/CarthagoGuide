@@ -6,11 +6,13 @@ import '../services/api_service.dart';
 class HotelProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
 
-  /// All fetched hotels (raw data from API)
+  /// All fetched hotels from API (accumulated across pages)
   List<Hotel> _allHotels = [];
   List<Hotel> get allHotels => _allHotels;
+  bool _hasStartedFetching = false;
+  bool get hasStartedFetching => _hasStartedFetching;
 
-  /// Hotels shown on screen after filters + pagination
+  /// Hotels currently displayed
   List<Hotel> _hotels = [];
   List<Hotel> get hotels => _hotels;
 
@@ -20,18 +22,20 @@ class HotelProvider with ChangeNotifier {
   String? _selectedDestinationId;
   String? get selectedDestinationId => _selectedDestinationId;
 
+  /// Pagination state
+  int _currentPage = 1;
+  int _lastFetchedPage = 0;
+  bool _hasMorePages = true;
+  bool get hasMorePages => _hasMorePages;
 
-  /// Pagination
-  int _pageSize = 10;
-  int get pageSize => _pageSize;
+  /// Display pagination
+  int _displayPageSize = 15;
+  int get pageSize => _displayPageSize;
+  int _currentDisplayPage = 1;
 
   /// Hotels matching all active filters
   List<Hotel> _currentlyFilteredHotels = [];
   List<Hotel> get currentlyFilteredHotels => _currentlyFilteredHotels;
-
-  int _currentPage = 1;
-  bool _hasMore = true;
-  bool get hasMore => _hasMore;
 
   /// Filters
   int? selectedStars;
@@ -59,31 +63,75 @@ class HotelProvider with ChangeNotifier {
       _currentState != null ? _hotelsByState[_currentState!] ?? [] : [];
 
   // ---------------------------------------------------------------------------
-  // 🚀 FETCH ALL HOTELS
+  // INITIAL FETCH
   // ---------------------------------------------------------------------------
   Future<void> fetchAllHotels() async {
-    if (_isLoading) return;
+
+    if (_isLoading || _hasStartedFetching) return;
+
+    _hasStartedFetching = true;
+    _isLoading = true;
+    _errorDetail = null;
+    _allHotels = [];
+    _currentPage = 1;
+    _lastFetchedPage = 0;
+    _hasMorePages = true;
+    notifyListeners();
+
+    try {
+      final fetchedHotels = await _apiService.gethotels(page: 1);
+      _allHotels = fetchedHotels;
+      _lastFetchedPage = 1;
+
+      if (fetchedHotels.length < 15) {
+        _hasMorePages = false;
+      }
+
+      applyFilters();
+    } catch (e) {
+      _errorDetail = "Failed to load hotels";
+      _allHotels = [];
+      debugPrint("❌ Error fetching hotels: $e");
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // 📄 LOAD MORE PAGES - Fetch next page from API
+  // ---------------------------------------------------------------------------
+  Future<void> continueLoadingAllPages() async {
+    while (_hasMorePages && !_isLoading) {
+      await loadMoreFromAPI();
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+  }
+
+
+  Future<void> loadMoreFromAPI() async {
+    if (_isLoading || !_hasMorePages) return;
 
     _isLoading = true;
     notifyListeners();
 
     try {
-      _allHotels = await _apiService.gethotels();
+      final nextPage = _lastFetchedPage + 1;
+      final nextHotels = await _apiService.gethotels(page: nextPage);
 
-      // Set initial filtered list to all hotels
-      _currentlyFilteredHotels = _allHotels;
+      if (nextHotels.isEmpty || nextHotels.length < 15) {
+        _hasMorePages = false;
+      }
 
-      // First page
-      _hotels = _currentlyFilteredHotels.take(_pageSize).toList();
+      if (nextHotels.isNotEmpty) {
+        _allHotels.addAll(nextHotels);
+        _lastFetchedPage = nextPage;
 
-      _currentPage = 1;
-      _hasMore = _hotels.length < _currentlyFilteredHotels.length;
-
+        // Reapply filters with new data
+        applyFilters();
+      }
     } catch (e) {
-      _allHotels = [];
-      _currentlyFilteredHotels = []; // Must clear this too
-      _hotels = [];
-      debugPrint("❌ Error fetching hotels: $e");
+      debugPrint("❌ Error loading more hotels: $e");
     }
 
     _isLoading = false;
@@ -113,8 +161,7 @@ class HotelProvider with ChangeNotifier {
     applyFilters();
   }
 
-
-  // Apply search + stars + destination
+  // Apply search + stars + destination filters
   void applyFilters() {
     _currentlyFilteredHotels = _allHotels.where((hotel) {
       final matchesSearch = hotel.name.toLowerCase().contains(searchQuery) ||
@@ -124,7 +171,6 @@ class HotelProvider with ChangeNotifier {
           selectedStars == null ||
               (hotel.categoryCode?.toInt() ?? 0) == selectedStars;
 
-      // 🔥 Correction ici : utiliser _selectedDestinationId si défini
       final matchesDestinationId =
           _selectedDestinationId == null ||
               hotel.destinationId == _selectedDestinationId;
@@ -139,16 +185,12 @@ class HotelProvider with ChangeNotifier {
           matchesDestinationId;
     }).toList();
 
-    _currentPage = 1;
-    _hasMore = _currentlyFilteredHotels.length > _pageSize;
-
-    _hotels = _currentlyFilteredHotels.take(_pageSize).toList();
-
-    notifyListeners();
+    // Reset to first display page
+    _currentDisplayPage = 1;
+    _updateDisplayedHotels();
   }
 
-
-  /// Add a method to reinitialize filters
+  /// Reinitialize all filters
   void clearFilters() {
     selectedStars = null;
     selectedDestination = null;
@@ -158,45 +200,27 @@ class HotelProvider with ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
-  // 📄 PAGINATION
+  // 📊 DISPLAY PAGINATION (for filtered results)
   // ---------------------------------------------------------------------------
-  void loadMoreHotels() {
-    if (!_hasMore || _isLoading) return;
-
-    // Load more from the CURRENTLY FILTERED list
-    final next = _currentlyFilteredHotels
-        .skip(_currentPage * _pageSize)
-        .take(_pageSize)
-        .toList();
-
-    if (next.isEmpty) {
-      _hasMore = false;
-    } else {
-      _hotels.addAll(next);
-      _currentPage++;
-    }
-
-    notifyListeners();
+  void loadPage(int page) {
+    _currentDisplayPage = page;
+    _updateDisplayedHotels();
   }
 
-  /// Load a specific page index
-  void loadPage(int page) {
-    final start = (page - 1) * _pageSize;
-    // Use the currently filtered list length for bounds
+  void _updateDisplayedHotels() {
+    final start = (_currentDisplayPage - 1) * _displayPageSize;
+    final end = start + _displayPageSize;
     final filteredLength = _currentlyFilteredHotels.length;
 
-    if (start >= filteredLength) return;
+    if (start >= filteredLength) {
+      _hotels = [];
+    } else {
+      _hotels = _currentlyFilteredHotels.sublist(
+        start,
+        end > filteredLength ? filteredLength : end,
+      );
+    }
 
-    final end = start + _pageSize;
-
-    // Load from the currently filtered list
-    _hotels = _currentlyFilteredHotels.sublist(
-      start,
-      end > filteredLength ? filteredLength : end,
-    );
-
-    _currentPage = page;
-    _hasMore = _hotels.length < filteredLength;
     notifyListeners();
   }
 
@@ -204,9 +228,7 @@ class HotelProvider with ChangeNotifier {
   // 🌍 FILTER BY DESTINATION CACHE
   // ---------------------------------------------------------------------------
   List<Hotel> getHotelsByDestination(String destId) {
-    print("hotels by destinations : $destId ");
     return _hotelsByDestination[destId] ?? [];
-
   }
 
   void setHotelsByDestination(String? destId) {
@@ -226,7 +248,7 @@ class HotelProvider with ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
-  // 🏨 HOTEL DETAILS
+  // 🨠HOTEL DETAILS
   // ---------------------------------------------------------------------------
   Future<void> fetchHotelDetail(String slug) async {
     _isLoadingDetail = true;
@@ -255,7 +277,7 @@ class HotelProvider with ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
-  // 🗺 HOTELS BY STATE
+  // HOTELS BY STATE
   // ---------------------------------------------------------------------------
   Future<void> fetchHotelsByState(String state) async {
     _isLoading = true;

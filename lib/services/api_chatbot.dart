@@ -91,6 +91,7 @@ class ChatService {
       );
 
       if (response.statusCode == 200) {
+        print('RAW RESPONSE: ${response.body}');
         return jsonDecode(response.body) as Map<String, dynamic>;
 
       } else if (response.statusCode == 408) {
@@ -111,7 +112,7 @@ class ChatService {
     }
   }
 
-  /// Start a new conversation (new session, same user)
+  // Start a new conversation (new session, same user)
   void startNewConversation() {
     _sessionId = 'session_${DateTime.now().millisecondsSinceEpoch}';
   }
@@ -192,7 +193,6 @@ class ChatService {
 
   /// Delete a conversation
   Future<void> deleteConversation(String sessionId) async {
-    // Ensure we have a user ID
     if (_userId == null) {
       await initialize();
     }

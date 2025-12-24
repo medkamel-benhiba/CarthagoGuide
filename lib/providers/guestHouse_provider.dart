@@ -14,14 +14,15 @@ class GuestHouseProvider with ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  String? _errorMessage;
-  String? get errorMessage => _errorMessage;
-
-  final int _pageSize = 10;
+  final int _pageSize = 15;
   int get pageSize => _pageSize;
 
   int _currentPage = 1;
   int get currentPage => _currentPage;
+
+  int _lastFetchedPage = 0;
+  bool _hasMorePages = true;
+  bool get hasMorePages => _hasMorePages;
 
   bool _hasMore = true;
   bool get hasMore => _hasMore;
@@ -30,70 +31,133 @@ class GuestHouseProvider with ChangeNotifier {
   int get totalMaisonsCount => _totalMaisonsCount;
   int get totalPages => (_totalMaisonsCount / _pageSize).ceil();
 
+  // Filters
   int? selectedStars;
   String? selectedDestination;
   String searchQuery = "";
 
-  final Map<String, List<GuestHouse>> _maisonsByDestination = {};
-  List<GuestHouse> getMaisonsByDestination(String destinationId) => _maisonsByDestination[destinationId] ?? [];
+  String? _errorDetail;
+  String? get errorDetail => _errorDetail;
 
-  GuestHouse? _selectedMaison;
-  GuestHouse? get selectedMaison => _selectedMaison;
+  // ---------------------------------------------------------------------------
+  // FETCHING DATA
+  // ---------------------------------------------------------------------------
+
+  Future<void> fetchAllGuestHouses() async {
+    if (_isLoading) return;
+
+    _isLoading = true;
+    _errorDetail = null;
+    _allMaisons = [];
+    _currentPage = 1;
+    _lastFetchedPage = 0;
+    _hasMorePages = true;
+    notifyListeners();
+
+    try {
+      final fetchedGuestHouses = await _apiService.getGuestHouses(page: 1);
+      _allMaisons = fetchedGuestHouses;
+      _lastFetchedPage = 1;
+
+      if (fetchedGuestHouses.length < 15) {
+        _hasMorePages = false;
+      }
+
+      _applyFiltersAndPagination();
+    } catch (e) {
+      _errorDetail = "Failed to load Guest Houses: $e";
+      _allMaisons = [];
+      debugPrint("❌ Error fetching Guest Houses: $e");
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMoreFromAPI() async {
+    if (_isLoading || !_hasMorePages) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final nextPage = _lastFetchedPage + 1;
+      final nextGuestHouse = await _apiService.getGuestHouses(page: nextPage);
+
+      if (nextGuestHouse.isEmpty || nextGuestHouse.length < 25) {
+        _hasMorePages = false;
+      }
+
+      if (nextGuestHouse.isNotEmpty) {
+        _allMaisons.addAll(nextGuestHouse);
+        _lastFetchedPage = nextPage;
+        _applyFiltersAndPagination(); // Refresh the list with new data
+      }
+    } catch (e) {
+      debugPrint("❌ Error loading more Guest Houses: $e");
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // FILTER SETTERS
+  // ---------------------------------------------------------------------------
 
   void setSearchQuery(String query) {
     searchQuery = query;
     _currentPage = 1;
-    filterMaisons();
+    _applyFiltersAndPagination();
   }
 
   void setStars(int? stars) {
     selectedStars = stars;
     _currentPage = 1;
-    filterMaisons();
+    _applyFiltersAndPagination();
   }
 
   void setDestination(String? destinationName) {
     selectedDestination = destinationName;
     _currentPage = 1;
-    filterMaisons();
+    _applyFiltersAndPagination();
   }
 
-  Future<void> fetchMaisons() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-    try {
-      _allMaisons = await _apiService.getmaisons();
-      _maisonsByDestination.clear();
-      for (var maison in _allMaisons) {
-        final destId = maison.destinationId;
-        _maisonsByDestination.putIfAbsent(destId, () => []);
-        _maisonsByDestination[destId]!.add(maison);
-      }
-      filterMaisons();
-    } catch (e) {
-      _allMaisons = [];
-      _errorMessage = "Error fetching maisons: $e";
-      _isLoading = false;
-      notifyListeners();
-    }
+  void clearFilters() {
+    selectedStars = null;
+    selectedDestination = null;
+    searchQuery = "";
+    _currentPage = 1;
+    _applyFiltersAndPagination();
   }
 
-  void filterMaisons() {
-    List<GuestHouse> filteredList = _allMaisons;
+  void loadPage(int page) {
+    _currentPage = page;
+    _applyFiltersAndPagination();
+  }
 
+  // ---------------------------------------------------------------------------
+  // THE UNIFIED METHOD
+  // ---------------------------------------------------------------------------
+
+  void _applyFiltersAndPagination() {
+    List<GuestHouse> filteredList = List.from(_allMaisons);
+
+    // 1. Filter by Stars
     if (selectedStars != null) {
       filteredList = filteredList
           .where((m) => (double.tryParse(m.noteGoogle) ?? 0.0) >= selectedStars!)
           .toList();
     }
 
+    // 2. Filter by Destination
     if (selectedDestination != null && selectedDestination != "Toutes") {
       filteredList = filteredList
           .where((m) => m.destination.name.toLowerCase() == selectedDestination!.toLowerCase())
           .toList();
     }
 
+    // 3. Filter by Search Query
     if (searchQuery.isNotEmpty) {
       final query = searchQuery.toLowerCase();
       filteredList = filteredList
@@ -106,44 +170,21 @@ class GuestHouseProvider with ChangeNotifier {
 
     _totalMaisonsCount = filteredList.length;
 
-    loadPage(_currentPage, filteredList: filteredList);
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  void loadPage(int page, {List<GuestHouse>? filteredList}) {
-    final listToPaginate = filteredList ?? _allMaisons;
-
-    final startIndex = (page - 1) * _pageSize;
+    // 4. Handle Pagination
+    final startIndex = (_currentPage - 1) * _pageSize;
     final endIndex = startIndex + _pageSize;
 
-    if (startIndex >= listToPaginate.length) {
+    if (startIndex >= filteredList.length) {
       _maisons = [];
-      _currentPage = page;
       _hasMore = false;
-      notifyListeners();
-      return;
+    } else {
+      _maisons = filteredList.sublist(
+        startIndex,
+        endIndex.clamp(0, filteredList.length),
+      );
+      _hasMore = endIndex < filteredList.length;
     }
 
-    _maisons = listToPaginate.sublist(
-      startIndex,
-      endIndex.clamp(0, listToPaginate.length),
-    );
-
-    _currentPage = page;
-    _hasMore = endIndex < listToPaginate.length;
     notifyListeners();
-  }
-
-  // --------------------------------------------------------------------------
-  // 🧹 CLEAR FILTERS
-  // --------------------------------------------------------------------------
-  void clearFilters() {
-    selectedStars = null;
-    selectedDestination = null;
-    searchQuery = "";
-    _currentPage = 1;
-    filterMaisons();
   }
 }

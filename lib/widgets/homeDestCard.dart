@@ -1,5 +1,6 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/destination.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -117,7 +118,7 @@ class _HomeDestCardState extends State<HomeDestCard> {
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
-                                  widget.destination.name,
+                                  widget.destination.getName(context.locale),
                                   textAlign: TextAlign.center,
                                   style:  TextStyle(
                                     fontSize: 22,

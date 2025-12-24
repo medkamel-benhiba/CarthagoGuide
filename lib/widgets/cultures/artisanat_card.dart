@@ -36,7 +36,6 @@ class ArtisanatCardWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              // Image
               CachedNetworkImage(
                 imageUrl: imgUrl,
                 height: 200,
@@ -56,7 +55,6 @@ class ArtisanatCardWidget extends StatelessWidget {
                 ),
               ),
 
-              // Gradient overlay
               Container(
                 height: 200,
                 decoration: BoxDecoration(
@@ -65,13 +63,12 @@ class ArtisanatCardWidget extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.7),
+                      theme.primary.withOpacity(0.7),
                     ],
                   ),
                 ),
               ),
 
-              // Title
               Positioned(
                 bottom: 15,
                 left: 15,

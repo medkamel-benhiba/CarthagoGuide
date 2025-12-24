@@ -1,7 +1,9 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/festival.dart';
+import 'package:CarthagoGuide/utils/open_googlemaps.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -35,16 +37,6 @@ class _FestivalDetailsScreenState extends State<FestivalDetailsScreen> {
     return plainText;
   }
 
-  Future<void> _openMap() async {
-    if (widget.festival.lat.isEmpty || widget.festival.lng.isEmpty) return;
-
-    final url = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${widget.festival.lat},${widget.festival.lng}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
@@ -55,7 +47,6 @@ class _FestivalDetailsScreenState extends State<FestivalDetailsScreen> {
       backgroundColor: theme.background,
       body: Stack(
         children: [
-          // Hero Image
           Container(
             height: size.height * 0.45,
             color: Colors.black,
@@ -135,10 +126,14 @@ class _FestivalDetailsScreenState extends State<FestivalDetailsScreen> {
                             ),
                           ),
                         ),
-                        if (widget.festival.lat.isNotEmpty && widget.festival.lng.isNotEmpty)
+                        if (widget.festival.lat != null && widget.festival.lng != null)
                           IconButton(
                             icon: Icon(Icons.map, color: theme.primary),
-                            onPressed: _openMap,
+                            onPressed: () {
+                              double? lng = double.tryParse(widget.festival.lng.toString());
+                              double? lat = double.tryParse(widget.festival.lat.toString());
+                              openMap(context, lng, lat);
+                            },
                           ),
                       ],
                     ),
@@ -153,7 +148,7 @@ class _FestivalDetailsScreenState extends State<FestivalDetailsScreen> {
 
                     // Description
                     Text(
-                      "Description",
+                      'details.description'.tr(),
                       style: TextStyle(
                         color: theme.text,
                         fontSize: 20,
@@ -189,7 +184,7 @@ class _FestivalDetailsScreenState extends State<FestivalDetailsScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(top: 5.0),
                                   child: Text(
-                                    _isDescriptionExpanded ? "Afficher moins" : "Afficher plus",
+                                    _isDescriptionExpanded ? 'details.show_less'.tr() : 'details.show_more'.tr(),
                                     style: TextStyle(
                                       color: theme.primary,
                                       fontSize: 14,
@@ -247,7 +242,7 @@ class _GallerySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Galerie Photos",
+          'details.gallery'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,

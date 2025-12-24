@@ -10,6 +10,7 @@ import 'package:CarthagoGuide/widgets/cultures/historyTimelineSection.dart';
 import 'package:CarthagoGuide/widgets/experiences_section.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:math' as math;
 
 class CulturesScreen extends StatefulWidget {
@@ -29,12 +30,15 @@ class _CulturesScreenState extends State<CulturesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
+    final locale = context.locale;
+
+
 
     final categories = [
-      {"title": "Monuments", "image": "assets/images/monuments.png"},
-      {"title": "Musées", "image": "assets/images/museums.png"},
-      {"title": "Festival", "image": "assets/images/festival.png"},
-      {"title": "Artisanat", "image": "assets/images/artisanat.png"},
+      {"title": 'cultures.monuments'.tr(), "key": "Monuments", "image": "assets/images/monuments.png"},
+      {"title": 'cultures.museums'.tr(), "key": "Musées", "image": "assets/images/museums.png"},
+      {"title": 'cultures.festival'.tr(), "key": "Festival", "image": "assets/images/festival.png"},
+      {"title": 'cultures.artisanat'.tr(), "key": "Artisanat", "image": "assets/images/artisanat.png"},
     ];
 
     return Scaffold(
@@ -47,7 +51,7 @@ class _CulturesScreenState extends State<CulturesScreen> {
           onPressed: _toggleDrawer,
         ),
         title: Text(
-          "Cultures",
+          'cultures.title'.tr(),
           style: TextStyle(color: theme.primary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -65,11 +69,11 @@ class _CulturesScreenState extends State<CulturesScreen> {
             ),
 
             const SizedBox(height: 16),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                "Découvrir la culture tunisienne",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                'cultures.discover'.tr(),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
               ),
             ),
             Circular3DCarousel(
@@ -275,10 +279,10 @@ class _Circular3DCarouselState extends State<Circular3DCarousel>
   }
 
   void _navigateToScreen(int index) {
-    final categoryTitle = widget.categories[index]['title'];
+    final categoryKey = widget.categories[index]['key'];
     Widget? screen;
 
-    switch (categoryTitle) {
+    switch (categoryKey) {
       case 'Monuments':
         screen = const MonumentScreen();
         break;

@@ -212,6 +212,26 @@ class Voyage {
         return programe.map((p) => p.description).join('\n');
     }
   }
+  // Inside your Voyage class in voyage.dart
+
+  List<Program> getLocalizedProgram(Locale locale) {
+    switch (locale.languageCode) {
+      case 'ar':
+        return programe_ar.isNotEmpty ? programe_ar : programe;
+      case 'en':
+        return programe_en.isNotEmpty ? programe_en : programe;
+      case 'ru':
+        return programe_ru.isNotEmpty ? programe_ru : programe;
+      case 'zh':
+        return programe_zh.isNotEmpty ? programe_zh : programe;
+      case 'ko':
+        return programe_ko.isNotEmpty ? programe_ko : programe;
+      case 'ja':
+        return programe_ja.isNotEmpty ? programe_ja : programe;
+      default:
+        return programe;
+    }
+  }
 }
 
 class Program {

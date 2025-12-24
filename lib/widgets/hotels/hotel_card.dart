@@ -48,7 +48,6 @@ class HotelCardWidget extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // 1. Cached Network Image
             CachedNetworkImage(
               imageUrl: imgUrl,
               imageBuilder: (context, imageProvider) => Container(
@@ -103,7 +102,7 @@ class HotelCardWidget extends StatelessWidget {
               ),
             ),
 
-            // 3. Stars rating (New Position)
+            // 3. Stars rating
             if (isHotel != false)
               Positioned(
                 top: padding,
@@ -158,8 +157,12 @@ class HotelCardWidget extends StatelessWidget {
 
             Positioned(
               left: padding,
+              right: padding,
               bottom: padding,
               child: Row(
+                mainAxisAlignment: Directionality.of(context) == TextDirection.rtl
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.start,
                 children: [
                   Icon(
                     Icons.location_on,
@@ -167,19 +170,25 @@ class HotelCardWidget extends StatelessWidget {
                     size: 14,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    destination,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                  Flexible(
+                    child: Text(
+                      destination,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: Directionality.of(context) == TextDirection.rtl
+                          ? TextAlign.right
+                          : TextAlign.left,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
+
           ],
         ),
       ),

@@ -5,11 +5,9 @@ import '../services/api_service.dart';
 class RestaurantProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
 
-  // All restaurants from API
   List<Restaurant> _allRestaurants = [];
   List<Restaurant> get allRestaurants => _allRestaurants;
 
-  // Paginated / filtered restaurants
   List<Restaurant> _restaurants = [];
   List<Restaurant> get restaurants => _restaurants;
 
@@ -19,11 +17,20 @@ class RestaurantProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  final int _pageSize = 10;
+  final int _pageSize = 15;
   int get pageSize => _pageSize;
 
   int _currentPage = 1;
   int get currentPage => _currentPage;
+
+  // Pagination state
+  int _lastFetchedPage = 0;
+  bool _hasMorePages = true;
+  bool get hasMorePages => _hasMorePages;
+
+  String? _errorDetail;
+  String? get errorDetail => _errorDetail;
+
 
   bool _hasMore = true;
   bool get hasMore => _hasMore;
@@ -48,40 +55,69 @@ class RestaurantProvider with ChangeNotifier {
   Restaurant? _selectedRestaurant;
   Restaurant? get selectedRestaurant => _selectedRestaurant;
 
-  // --------------------------------------------------------------------------
-  // Fetch all restaurants
-  // --------------------------------------------------------------------------
-  Future<void> fetchRestaurants() async {
+  // ---------------------------------------------------------------------------
+  Future<void> fetchAllRestaurants() async {
+    if (_isLoading) return;
+
     _isLoading = true;
-    _errorMessage = null;
+    _errorDetail = null;
+    _allRestaurants = [];
+    _currentPage = 1;
+    _lastFetchedPage = 0;
+    _hasMorePages = true;
     notifyListeners();
 
     try {
-      _allRestaurants = await _apiService.getAllRestaurants();
+      final fetchedRestaurants = await _apiService.getRestaurants(page: 1);
+      _allRestaurants = fetchedRestaurants;
+      _lastFetchedPage = 1;
 
-      // Cache by destination
-      _restaurantsByDestination.clear();
-      for (var r in _allRestaurants) {
-        final destId = r.destinationId?.toString() ?? 'unknown';
-        _restaurantsByDestination.putIfAbsent(destId, () => []);
-        _restaurantsByDestination[destId]!.add(r);
+      if (fetchedRestaurants.length < 15) {
+        _hasMorePages = false;
       }
 
-      _currentPage = 1;
       _applyFiltersAndPagination();
 
     } catch (e) {
+      _errorDetail = "Failed to load restaurants: $e";
       _allRestaurants = [];
-      _restaurants = [];
-      _errorMessage = "Error fetching restaurants: $e";
-      _isLoading = false;
-      notifyListeners();
+      debugPrint("❌ Error fetching restaurants: $e");
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
-  // --------------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------------
+  Future<void> loadMoreFromAPI() async {
+    if (_isLoading || !_hasMorePages) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final nextPage = _lastFetchedPage + 1;
+      final nextRestaurants = await _apiService.getRestaurants(page: nextPage);
+
+      if (nextRestaurants.isEmpty || nextRestaurants.length < 15) {
+        _hasMorePages = false;
+      }
+
+      if (nextRestaurants.isNotEmpty) {
+        _allRestaurants.addAll(nextRestaurants);
+        _lastFetchedPage = nextPage;
+        _applyFiltersAndPagination();
+      }
+    } catch (e) {
+      debugPrint("❌ Error loading more restaurants: $e");
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
   // Filters setters
-  // --------------------------------------------------------------------------
   void setSearchQuery(String query) {
     _searchQuery = query.toLowerCase();
     _currentPage = 1;
@@ -108,7 +144,6 @@ class RestaurantProvider with ChangeNotifier {
     _applyFiltersAndPagination();
   }
 
-  // --------------------------------------------------------------------------
   // Pagination
   // --------------------------------------------------------------------------
   void loadPage(int page) {
@@ -116,8 +151,6 @@ class RestaurantProvider with ChangeNotifier {
     _applyFiltersAndPagination();
   }
 
-  // --------------------------------------------------------------------------
-  // Apply filters + paginate
   // --------------------------------------------------------------------------
   void _applyFiltersAndPagination() {
     List<Restaurant> filtered = List.from(_allRestaurants);

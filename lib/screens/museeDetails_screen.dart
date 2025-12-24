@@ -1,7 +1,9 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/musee.dart';
+import 'package:CarthagoGuide/utils/open_googlemaps.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -35,16 +37,6 @@ class _MuseeDetailsScreenState extends State<MuseeDetailsScreen> {
     return plainText;
   }
 
-  Future<void> _openMap() async {
-    if (widget.musee.lat == null || widget.musee.lng == null) return;
-    if (widget.musee.lat!.isEmpty || widget.musee.lng!.isEmpty) return;
-
-    final url = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${widget.musee.lat},${widget.musee.lng}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +48,6 @@ class _MuseeDetailsScreenState extends State<MuseeDetailsScreen> {
       backgroundColor: theme.background,
       body: Stack(
         children: [
-          // Hero Image
           Container(
             height: size.height * 0.45,
             color: Colors.black,
@@ -137,13 +128,12 @@ class _MuseeDetailsScreenState extends State<MuseeDetailsScreen> {
                               ),
                             ),
                           ),
-                          if (widget.musee.lat != null &&
-                              widget.musee.lng != null &&
-                              widget.musee.lat!.isNotEmpty &&
-                              widget.musee.lng!.isNotEmpty)
+                          if (widget.musee.lat != null && widget.musee.lng != null)
                             IconButton(
                               icon: Icon(Icons.map, color: theme.primary),
-                              onPressed: _openMap,
+                              onPressed: () {
+                                openMap(context, widget.musee.lng, widget.musee.lat);
+                              },
                             ),
                         ],
                       ),
@@ -160,7 +150,7 @@ class _MuseeDetailsScreenState extends State<MuseeDetailsScreen> {
                     if (widget.musee.getEntryFee(locale).isNotEmpty)
                       _InfoSection(
                         theme: theme,
-                        title: "Droits d'entrée",
+                        title: 'details.entry_fee'.tr(),
                         content: widget.musee.getEntryFee(locale),
                         icon: Icons.local_atm,
                       ),
@@ -171,26 +161,26 @@ class _MuseeDetailsScreenState extends State<MuseeDetailsScreen> {
                     if (widget.musee.horairesOuverture.isNotEmpty)
                       _InfoSection(
                         theme: theme,
-                        title: "Horaires d'ouverture",
+                        title: 'details.opening_hours'.tr(),
                         content: widget.musee.horairesOuverture.join('\n'),
                         icon: Icons.access_time,
                       ),
 
                     const SizedBox(height: 20),
 
-                    // Things to See
+                   /* // Things to See
                     if (widget.musee.getAVoir(locale).isNotEmpty)
                       _ListSection(
                         theme: theme,
-                        title: "À voir",
+                        title: 'details.things_to_see'.tr(),
                         items: widget.musee.getAVoir(locale),
                       ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 30),*/
 
                     // Description
                     Text(
-                      "Description",
+                      'details.description'.tr(),
                       style: TextStyle(
                         color: theme.text,
                         fontSize: 20,
@@ -226,7 +216,7 @@ class _MuseeDetailsScreenState extends State<MuseeDetailsScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(top: 5.0),
                                   child: Text(
-                                    _isDescriptionExpanded ? "Afficher moins" : "Afficher plus",
+                                    _isDescriptionExpanded ? 'details.show_less'.tr() : 'details.show_more'.tr(),
                                     style: TextStyle(
                                       color: theme.primary,
                                       fontSize: 14,
@@ -239,12 +229,14 @@ class _MuseeDetailsScreenState extends State<MuseeDetailsScreen> {
                         );
                       },
                     ),
+                    const SizedBox(height: 30),
 
-                    // Observations
+
+                    /*// Observations
                     if (widget.musee.getObservations(locale).isNotEmpty) ...[
                       const SizedBox(height: 30),
                       Text(
-                        "Observations",
+                        'details.observations'.tr(),
                         style: TextStyle(
                           color: theme.text,
                           fontSize: 20,
@@ -260,7 +252,7 @@ class _MuseeDetailsScreenState extends State<MuseeDetailsScreen> {
                           height: 1.5,
                         ),
                       ),
-                    ],
+                    ],*/
                   ],
                 ),
               ),
@@ -306,7 +298,7 @@ class _GallerySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Galerie Photos",
+          'details.gallery'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,

@@ -1,4 +1,3 @@
-// lib/screens/splash_screen.dart
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/providers/activity_provider.dart';
 import 'package:CarthagoGuide/providers/destination_provider.dart';
@@ -48,13 +47,19 @@ class _SplashScreenState extends State<SplashScreen>
       });
     });
 
-    // Fetch initial data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        final hotelProvider = Provider.of<HotelProvider>(context, listen: false);
+
         Provider.of<DestinationProvider>(context, listen: false).fetchDestinations();
-        Provider.of<HotelProvider>(context, listen: false).fetchAllHotels();
-        Provider.of<RestaurantProvider>(context, listen: false).fetchRestaurants();
-        Provider.of<GuestHouseProvider>(context, listen: false).fetchMaisons();
+
+        hotelProvider.fetchAllHotels().then((_) {
+          if (mounted) {
+            hotelProvider.continueLoadingAllPages();
+          }
+        });
+        Provider.of<RestaurantProvider>(context, listen: false).fetchAllRestaurants();
+        Provider.of<GuestHouseProvider>(context, listen: false).fetchAllGuestHouses();
         Provider.of<ActivityProvider>(context, listen: false).fetchAllActivities();
       }
     });

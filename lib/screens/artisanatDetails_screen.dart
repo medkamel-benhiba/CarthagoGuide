@@ -2,6 +2,7 @@ import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/artisanat.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -157,7 +158,7 @@ class _ArtisanatDetailsScreenState extends State<ArtisanatDetailsScreen> {
 
                     // Description
                     Text(
-                      "Description",
+                      'details.description'.tr(),
                       style: TextStyle(
                         color: theme.text,
                         fontSize: 20,
@@ -193,7 +194,7 @@ class _ArtisanatDetailsScreenState extends State<ArtisanatDetailsScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(top: 5.0),
                                   child: Text(
-                                    _isDescriptionExpanded ? "Afficher moins" : "Afficher plus",
+                                    _isDescriptionExpanded ? 'details.show_less'.tr() : 'details.show_more'.tr(),
                                     style: TextStyle(
                                       color: theme.primary,
                                       fontSize: 14,
@@ -251,7 +252,7 @@ class _GallerySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Galerie Photos",
+          'details.gallery'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,

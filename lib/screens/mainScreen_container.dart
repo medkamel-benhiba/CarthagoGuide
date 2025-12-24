@@ -2,6 +2,8 @@ import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/providers/guestHouse_provider.dart';
 import 'package:CarthagoGuide/providers/hotel_provider.dart';
 import 'package:CarthagoGuide/providers/restaurant_provider.dart';
+import 'package:CarthagoGuide/widgets/language_selector.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,10 +14,7 @@ import 'dart:io' show Platform;
 class MainScreenContainer extends StatefulWidget {
   final Widget child;
 
-  const MainScreenContainer({
-    super.key,
-    required this.child,
-  });
+  const MainScreenContainer({super.key, required this.child});
 
   @override
   State<MainScreenContainer> createState() => MainScreenContainerState();
@@ -71,7 +70,6 @@ class MainScreenContainerState extends State<MainScreenContainer>
       return false;
     }
 
-    // Check if we're on home screen
     final currentLocation = GoRouterState.of(context).matchedLocation;
     if (currentLocation != '/home') {
       context.go('/home');
@@ -88,46 +86,38 @@ class MainScreenContainerState extends State<MainScreenContainer>
             borderRadius: BorderRadius.circular(15),
           ),
           title: Text(
-            'Quitter l\'application ?',
-            style: TextStyle(
-              color: theme.text,
-              fontWeight: FontWeight.bold,
-            ),
+            'drawer.exit_title'.tr(),
+            style: TextStyle(color: theme.text, fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Êtes-vous sûr de vouloir quitter Carthago Guide ?',
+            'drawer.exit_message'.tr(),
             style: TextStyle(color: theme.text),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Annuler',
-                style: TextStyle(color: theme.primary),
-              ),
+              child: Text('common.cancel'.tr(), style: TextStyle(color: theme.primary)),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.primary,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: theme.primary),
               onPressed: () {
                 Navigator.of(context).pop(true);
                 SystemNavigator.pop();
               },
-              child: const Text('Oui, Quitter'),
+              child: Text('drawer.exit_confirm'.tr()),
             ),
           ],
         ),
       );
       return false;
     }
-
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
+    final isRTL = context.locale.languageCode == 'ar';
 
     return WillPopScope(
       onWillPop: () => _onWillPop(context, theme),
@@ -135,22 +125,32 @@ class MainScreenContainerState extends State<MainScreenContainer>
         backgroundColor: theme.secondary,
         body: Stack(
           children: [
-            CustomDrawerMenu(
-              onThemeSwitch: toggleDrawer,
-              toggleDrawer: toggleDrawer,
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: isRTL ? null : 0,
+              right: isRTL ? 0 : null,
+              width: 280,
+              child: CustomDrawerMenu(
+                onThemeSwitch: toggleDrawer,
+                toggleDrawer: toggleDrawer,
+                isRTL: isRTL,
+              ),
             ),
             AnimatedBuilder(
               animation: _drawerController,
               builder: (context, child) {
                 return Transform(
                   transform: Matrix4.identity()
-                    ..translate(_slideAnimation.value)
+                    ..translate(isRTL ? -_slideAnimation.value : _slideAnimation.value)
                     ..scale(_scaleAnimation.value),
-                  alignment: Alignment.centerLeft,
+                  alignment: isRTL ? Alignment.centerRight : Alignment.centerLeft,
                   child: GestureDetector(
                     onTap: isDrawerOpen ? toggleDrawer : null,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(isDrawerOpen ? 30 : 0),
+                      borderRadius: BorderRadius.circular(
+                        isDrawerOpen ? 30 : 0,
+                      ),
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: isDrawerOpen
@@ -158,10 +158,9 @@ class MainScreenContainerState extends State<MainScreenContainer>
                             BoxShadow(
                               color: Colors.black.withOpacity(0.2),
                               blurRadius: 30,
-                              offset: const Offset(-10, 10),
-                            )
-                          ]
-                              : [],
+                              offset: Offset(isRTL ? 10 : -10, 10),
+                            ),
+                          ] : [],
                         ),
                         child: widget.child,
                       ),
@@ -180,11 +179,13 @@ class MainScreenContainerState extends State<MainScreenContainer>
 class CustomDrawerMenu extends StatelessWidget {
   final VoidCallback? onThemeSwitch;
   final VoidCallback? toggleDrawer;
+  final bool isRTL;
 
   const CustomDrawerMenu({
     super.key,
     this.onThemeSwitch,
     this.toggleDrawer,
+    this.isRTL = false,
   });
 
   void _navigateAndClose(BuildContext context, String routeName) {
@@ -200,13 +201,19 @@ class CustomDrawerMenu extends StatelessWidget {
     final theme = themeProvider.currentTheme;
     final textColor = theme.isSpec ? Colors.black : Colors.white;
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 30, top: 70, bottom: 50),
+    return Container(
+      color: theme.secondary,
+      padding: EdgeInsets.only(
+        left: isRTL ? 20 : 30,
+        right: isRTL ? 20 : 15,
+        top: 70,
+        bottom: 50,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: isRTL ? CrossAxisAlignment.start : CrossAxisAlignment.start,
         children: [
           Text(
-            "Paramétres",
+            "drawer.settings".tr(),
             style: GoogleFonts.montserrat(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -215,23 +222,25 @@ class CustomDrawerMenu extends StatelessWidget {
           ),
           const SizedBox(height: 35),
 
-          // Menu Items
           DrawerItem(
             icon: Icons.home_outlined,
-            label: "Accueil",
+            label: "drawer.home".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () => _navigateAndClose(context, '/home'),
           ),
           DrawerItem(
             icon: Icons.place_outlined,
-            label: "Destinations",
+            label: "drawer.destinations".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () => _navigateAndClose(context, '/destinations'),
           ),
           DrawerItem(
             icon: Icons.hotel,
-            label: "Hôtels",
+            label: "drawer.hotels".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () {
               Provider.of<HotelProvider>(context, listen: false).clearFilters();
               _navigateAndClose(context, '/hotels');
@@ -239,8 +248,9 @@ class CustomDrawerMenu extends StatelessWidget {
           ),
           DrawerItem(
             icon: Icons.apartment_outlined,
-            label: "Maisons D'Hôte",
+            label: "drawer.guest_houses".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () {
               Provider.of<GuestHouseProvider>(context, listen: false).clearFilters();
               _navigateAndClose(context, '/guest-houses');
@@ -248,8 +258,9 @@ class CustomDrawerMenu extends StatelessWidget {
           ),
           DrawerItem(
             icon: Icons.restaurant_menu,
-            label: "Restaurants",
+            label: "drawer.restaurants".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () {
               Provider.of<RestaurantProvider>(context, listen: false).clearFilters();
               _navigateAndClose(context, '/restaurants');
@@ -257,53 +268,55 @@ class CustomDrawerMenu extends StatelessWidget {
           ),
           DrawerItem(
             icon: Icons.local_activity_outlined,
-            label: "Activités",
+            label: "drawer.activities".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () => _navigateAndClose(context, '/activities'),
           ),
           DrawerItem(
             icon: Icons.event_available_outlined,
-            label: "Évènements",
+            label: "drawer.events".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () => _navigateAndClose(context, '/events'),
           ),
           DrawerItem(
             icon: Icons.account_balance_outlined,
-            label: "Cultures",
+            label: "drawer.cultures".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () => _navigateAndClose(context, '/cultures'),
           ),
           DrawerItem(
             icon: Icons.route_outlined,
-            label: "Circuits",
+            label: "drawer.circuits".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () => _navigateAndClose(context, '/circuits'),
           ),
           DrawerItem(
             icon: Icons.star_border,
-            label: "Sponsors",
+            label: "drawer.sponsors".tr(),
             color: textColor,
+            isRTL: isRTL,
             onTap: () => _navigateAndClose(context, '/sponsors'),
           ),
 
-          const Spacer(flex: 9),
+          const Spacer(),
 
-          // Language Switch
           Row(
+            mainAxisAlignment: isRTL ? MainAxisAlignment.start : MainAxisAlignment.start,
             children: [
-              Icon(Icons.language, color: theme.primary),
-              const SizedBox(width: 10),
-              Text(
-                "Français",
-                style: TextStyle(color: theme.primary, fontSize: 18),
+              LanguageSelector(
+                showInTopMenu: false,
+                onLanguageChanged: toggleDrawer, // Pass toggleDrawer callback
               ),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
 
-          // Theme Switch Section
           Text(
-            "Choisir Thème",
+            "drawer.choose_theme".tr(),
             style: TextStyle(
               color: textColor.withOpacity(0.6),
               fontSize: 14,
@@ -313,6 +326,7 @@ class CustomDrawerMenu extends StatelessWidget {
           const SizedBox(height: 15),
 
           Row(
+            mainAxisAlignment: isRTL ? MainAxisAlignment.start : MainAxisAlignment.start,
             children: List.generate(4, (index) {
               return GestureDetector(
                 onTap: () {
@@ -320,9 +334,12 @@ class CustomDrawerMenu extends StatelessWidget {
                   onThemeSwitch?.call();
                 },
                 child: Container(
-                  margin: const EdgeInsets.only(right: 15),
-                  width: 40,
-                  height: 40,
+                  margin: EdgeInsets.only(
+                    right: isRTL ? 0 : 15,
+                    left: isRTL ? 15 : 0,
+                  ),
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: index == 0
@@ -338,7 +355,6 @@ class CustomDrawerMenu extends StatelessWidget {
               );
             }),
           ),
-
           const Spacer(flex: 2),
         ],
       ),
@@ -351,6 +367,7 @@ class DrawerItem extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
+  final bool isRTL;
 
   const DrawerItem({
     super.key,
@@ -358,6 +375,7 @@ class DrawerItem extends StatelessWidget {
     required this.label,
     required this.color,
     required this.onTap,
+    this.isRTL = false,
   });
 
   @override
@@ -367,10 +385,18 @@ class DrawerItem extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Row(
+          mainAxisAlignment: isRTL ? MainAxisAlignment.start : MainAxisAlignment.start,
           children: [
-            Icon(icon, color: color),
-            const SizedBox(width: 10),
-            Text(label, style: TextStyle(color: color, fontSize: 18)),
+            if (!isRTL) ...[
+              Icon(icon, color: color),
+              const SizedBox(width: 15),
+              Text(label, style: TextStyle(color: color, fontSize: 18)),
+            ],
+            if (isRTL) ...[
+              Icon(icon, color: color),
+              const SizedBox(width: 15),
+              Text(label, style: TextStyle(color: color, fontSize: 18)),
+            ],
           ],
         ),
       ),

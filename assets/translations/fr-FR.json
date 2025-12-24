@@ -1,0 +1,179 @@
+{
+  "app_name": "CarthagoGuide",
+  "home": {
+    "search_placeholder": "Rechercher destinations, hôtels...",
+    "categories": {
+      "destinations": "Destinations",
+      "hotels": "Hôtels",
+      "restaurants": "Restaurants",
+      "circuits": "Circuits",
+      "chatbot": "Chatbot"
+    },
+    "sections": {
+      "destinations": "Destinations",
+      "circuits": "Circuits",
+      "events": "Événements",
+      "gallery": "Galerie",
+      "moments": "Moments"
+    },
+    "experiences": {
+      "adventure": "Aventure",
+      "kairouan_vibes": "Vibes de Kairouan",
+      "local_food": "Cuisine Locale",
+      "desert_trip": "Voyage au Désert",
+      "beach_day": "Journée à la Plage",
+      "museums": "Musées"
+    }
+  },
+  "common": {
+    "see_more": "Voir plus",
+    "retry": "Réessayer",
+    "loading": "Chargement...",
+    "no_data": "Aucune donnée disponible",
+    "error": "Erreur",
+    "check_connection": "Vérifiez votre connexion Internet et réessayez.",
+    "cancel": "Annuler",
+    "search_placeholder": "Rechercher...",
+    "clear_filters": "Effacer les filtres"
+  },
+  "drawer": {
+    "settings": "Paramètres",
+    "home": "Accueil",
+    "destinations": "Destinations",
+    "hotels": "Hôtels",
+    "guest_houses": "Maisons D'Hôte",
+    "restaurants": "Restaurants",
+    "activities": "Activités",
+    "events": "Évènements",
+    "cultures": "Cultures",
+    "circuits": "Circuits",
+    "sponsors": "Sponsors",
+    "choose_theme": "Choisir Thème",
+    "exit_title": "Quitter l'application ?",
+    "exit_message": "Êtes-vous sûr de vouloir quitter Carthago Guide ?",
+    "exit_confirm": "Oui, Quitter"
+  },
+  "language": "Langue",
+  "destinations": {
+    "title": "Destinations",
+    "nearby": "À proximité"
+  },
+  "circuits": {
+    "title": "Circuits",
+    "days": "jours",
+    "duration": "Durée",
+    "featured": "Circuits en vedette",
+    "all": "Tous les circuits"
+  },
+  "events": {
+    "title": "Événements",
+    "no_title": "Événement sans titre",
+    "no_location": "Lieu non spécifié",
+    "no_date": "Date non spécifiée"
+  },
+  "activities": {
+    "title": "Activités",
+    "retry": "Réessayer",
+    "results": "Résultats ({count})",
+    "check_connection": "Aucune activité disponible.",
+    "clear_search": "Effacer la recherche",
+    "untitled": "Sans titre"
+  },
+  "errors": {
+    "fetch_failed": "Échec du chargement des données",
+    "network_error": "Erreur de connexion",
+    "empty_list": "Aucun élément disponible"
+  },
+  "hotels": {
+    "title": "Hôtels",
+    "unknown_destination": "Destination inconnue",
+    "no_results": "Aucun hôtel trouvé",
+    "try_different_search": "Essayez d'ajuster votre recherche ou vos filtres"
+
+  },
+  "restaurants": {
+    "title": "Restaurants",
+    "unknown": "Inconnu"
+  },
+  "guest_houses": {
+    "title": "Maisons d'Hôte"
+  },
+  "cultures": {
+    "title": "Cultures",
+    "discover": "Découvrir la culture tunisienne",
+    "monuments": "Monuments",
+    "museums": "Musées",
+    "festival": "Festival",
+    "festivals": "Festivals",
+    "artisanat": "Artisanat",
+    "tunisia_chronicles": "Chroniques de la Tunisie"
+  },
+  "sponsors": {
+    "title": "Nos Partenaires",
+    "thanks": "Merci à nos partenaires",
+    "support_message": "Ils nous font confiance et soutiennent notre mission",
+    "become_partner": "Vous souhaitez devenir partenaire ?",
+    "contact_us": "Contactez-nous pour en savoir plus"
+  },
+  "chatbot": {
+    "welcome": "Bonjour ! Je suis votre assistant Carthago Guide. Comment puis-je vous aider à explorer la Tunisie aujourd'hui ?",
+    "new_conversation": "Nouvelle Conversation",
+    "history": "Historique"
+  },
+  "details": {
+    "amenities": "Équipements",
+    "wifi": "WiFi",
+    "spa": "Spa",
+    "restaurant": "Restaurant",
+    "pool": "Piscine",
+    "description": "Description",
+    "show_more": "Afficher plus",
+    "show_less": "Afficher moins",
+    "gallery": "Galerie Photos",
+    "contact": "Contact",
+    "features": "Caractéristiques",
+    "cuisine": "Cuisine",
+    "delivery": "Livraison",
+    "terrace": "Terrasse",
+    "bar": "Bar",
+    "opening_hours": "Horaires d'ouverture",
+    "about": "À propos",
+    "location_unavailable": "Localisation non disponible",
+    "destination_details": "Détails de la Destination:",
+    "no_hotels": "Aucun hôtel disponible pour cette destination",
+    "no_restaurants": "Aucun restaurant disponible pour cette destination",
+    "about_circuit": "À propos du Circuit",
+    "duration": "Durée",
+    "price": "Prix",
+    "circuit_program": "Programme du Circuit",
+    "day": "Jour",
+    "whats_included": "Ce qui est inclus",
+    "accommodation_included": "Hébergement inclus",
+    "meals_included": "Repas inclus",
+    "transport_organized": "Transport organisé",
+    "professional_guide": "Guide professionnel",
+    "free": "Gratuit",
+    "date_unavailable": "Date non disponible",
+    "breakfast": "Petit-déj",
+    "ac": "Climatisation",
+    "parking": "Parking",
+    "entry_fee": "Droits d'entrée",
+    "things_to_see": "À voir",
+    "observations": "Observations"
+  },
+  "filters": {
+    "stars": "Étoiles",
+    "star": "Étoile",
+    "forks": "Fourchettes",
+    "fork": "Fourchette",
+    "filter": "Filtre",
+    "destination": "Destination"
+  },
+  "video": {
+    "featured": "En vedette",
+    "discover_tunisia": "Découvrir la Tunisie"
+  },
+  "read_aloud": "Lecture audio",
+  "stop": "Arrêter"
+
+}

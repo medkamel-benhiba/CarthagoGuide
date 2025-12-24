@@ -35,7 +35,6 @@ class ActivityProvider with ChangeNotifier {
 
   /// Fetch all activities once
   Future<void> fetchAllActivities() async {
-    // Prevent duplicate fetching
     if (_allActivitiesFetched || _isLoading) return;
 
     _isLoading = true;
@@ -46,7 +45,6 @@ class ActivityProvider with ChangeNotifier {
       allActivities = await _apiService.getallactivities();
       _allActivitiesFetched = true;
 
-      // Clear existing cache before rebuilding
       _activitiesByDestination.clear();
 
       // Pre-cache per destination
@@ -56,14 +54,13 @@ class ActivityProvider with ChangeNotifier {
         _activitiesByDestination[destId]!.add(activity);
       }
 
-      // Initialize _activities with all activities (no filter applied yet)
       _activities = List.from(allActivities);
       _totalActivitiesCount = allActivities.length;
 
     } catch (e) {
       allActivities = [];
       _activities = [];
-      _allActivitiesFetched = false; // Allow retry on error
+      _allActivitiesFetched = false;
       _errorMessage = "Erreur lors du chargement: $e";
       debugPrint(_errorMessage);
     }
@@ -72,7 +69,7 @@ class ActivityProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Original method maintained for backward compatibility
+  // Original method maintained for backward compatibility
   Future<void> fetchActivities() async {
     _isLoading = true;
     _errorMessage = null;
@@ -105,7 +102,7 @@ class ActivityProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Get activities by destination from cache
+  // Get activities by destination from cache
   void setActivitiesByDestination(String destinationId) {
     _activities = _activitiesByDestination[destinationId] ?? [];
     _totalActivitiesCount = _activities.length;

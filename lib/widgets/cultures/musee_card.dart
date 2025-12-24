@@ -38,7 +38,6 @@ class MuseeCardWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              // Image
               CachedNetworkImage(
                 imageUrl: imgUrl,
                 height: 200,
@@ -67,7 +66,7 @@ class MuseeCardWidget extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.7),
+                      theme.primary.withOpacity(0.7),
                     ],
                   ),
                 ),
@@ -97,7 +96,7 @@ class MuseeCardWidget extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.location_on,
-                            color: Colors.white70,
+                            color: Colors.red,
                             size: 16,
                           ),
                           const SizedBox(width: 5),

@@ -1,0 +1,180 @@
+{
+  "app_name": "CarthagoGuide",
+  "home": {
+    "search_placeholder": "目的地・ホテルを検索...",
+    "categories": {
+      "destinations": "目的地",
+      "hotels": "ホテル",
+      "restaurants": "レストラン",
+      "circuits": "ツアー",
+      "chatbot": "チャットボット"
+    },
+    "sections": {
+      "destinations": "目的地",
+      "circuits": "ツアー",
+      "events": "イベント",
+      "gallery": "ギャラリー",
+      "moments": "モーメント"
+    },
+    "experiences": {
+      "adventure": "冒険",
+      "kairouan_vibes": "カイルアンの雰囲気",
+      "local_food": "ローカル料理",
+      "desert_trip": "砂漠の旅",
+      "beach_day": "ビーチデー",
+      "museums": "博物館"
+    }
+  },
+  "common": {
+    "see_more": "もっと見る",
+    "retry": "再試行",
+    "loading": "読み込み中...",
+    "no_data": "データがありません",
+    "error": "エラー",
+    "check_connection": "インターネット接続を確認してください。",
+    "cancel": "キャンセル",
+    "search_placeholder": "検索...",
+    "clear_filters": "フィルターをクリア"
+
+  },
+  "drawer": {
+    "settings": "設定",
+    "home": "ホーム",
+    "destinations": "目的地",
+    "hotels": "ホテル",
+    "guest_houses": "ゲストハウス",
+    "restaurants": "レストラン",
+    "activities": "アクティビティ",
+    "events": "イベント",
+    "cultures": "文化",
+    "circuits": "ツアー",
+    "sponsors": "スポンサー",
+    "choose_theme": "テーマを選択",
+    "exit_title": "アプリを終了しますか？",
+    "exit_message": "Carthago Guide を終了してもよろしいですか？",
+    "exit_confirm": "はい、終了"
+  },
+  "language": "言語",
+  "destinations": {
+    "title": "目的地",
+    "nearby": "近く"
+  },
+  "circuits": {
+    "title": "ツアー",
+    "days": "日",
+    "duration": "期間",
+    "featured": "おすすめツアー",
+    "all": "すべてのツアー"
+  },
+  "events": {
+    "title": "イベント",
+    "no_title": "タイトルなし",
+    "no_location": "場所未指定",
+    "no_date": "日付未指定"
+  },
+  "activities": {
+    "title": "アクティビティ",
+    "retry": "再試行",
+    "results": "結果（{count}）",
+    "check_connection": "接続を確認して再試行してください。",
+    "clear_search": "検索をクリア",
+    "untitled": "無題"
+  },
+  "errors": {
+    "fetch_failed": "データの取得に失敗しました",
+    "network_error": "ネットワークエラー",
+    "empty_list": "利用可能な項目がありません"
+  },
+  "hotels": {
+    "title": "ホテル",
+    "unknown_destination": "不明な目的地",
+    "no_results": "ホテルが見つかりません",
+    "try_different_search": "検索条件やフィルターを調整してください"
+
+  },
+  "restaurants": {
+    "title": "レストラン",
+    "unknown": "不明"
+  },
+  "guest_houses": {
+    "title": "ゲストハウス"
+  },
+  "cultures": {
+    "title": "文化",
+    "discover": "チュニジア文化を発見",
+    "monuments": "モニュメント",
+    "museums": "博物館",
+    "festival": "フェスティバル",
+    "festivals": "祭り",
+    "artisanat": "工芸品",
+    "tunisia_chronicles": "チュニジア年代記"
+  },
+  "sponsors": {
+    "title": "パートナー",
+    "thanks": "パートナーの皆様に感謝します",
+    "support_message": "私たちの使命を支援してくれています",
+    "become_partner": "パートナーになりませんか？",
+    "contact_us": "詳細はお問い合わせください"
+  },
+  "chatbot": {
+    "welcome": "こんにちは！Carthago Guide のアシスタントです。チュニジア探索をお手伝いします。",
+    "new_conversation": "新しい会話",
+    "history": "履歴"
+  },
+  "details": {
+    "amenities": "設備",
+    "wifi": "Wi-Fi",
+    "spa": "スパ",
+    "restaurant": "レストラン",
+    "pool": "プール",
+    "description": "説明",
+    "show_more": "もっと見る",
+    "show_less": "閉じる",
+    "gallery": "写真ギャラリー",
+    "contact": "連絡先",
+    "features": "特徴",
+    "cuisine": "料理",
+    "delivery": "デリバリー",
+    "terrace": "テラス",
+    "bar": "バー",
+    "opening_hours": "営業時間",
+    "about": "概要",
+    "location_unavailable": "位置情報なし",
+    "destination_details": "目的地の詳細：",
+    "no_hotels": "利用可能なホテルはありません",
+    "no_restaurants": "利用可能なレストランはありません",
+    "about_circuit": "ツアーについて",
+    "duration": "期間",
+    "price": "価格",
+    "circuit_program": "ツアープログラム",
+    "day": "日目",
+    "whats_included": "含まれる内容",
+    "accommodation_included": "宿泊込み",
+    "meals_included": "食事込み",
+    "transport_organized": "送迎あり",
+    "professional_guide": "プロガイド",
+    "free": "無料",
+    "date_unavailable": "日付不明",
+    "breakfast": "朝食",
+    "ac": "エアコン",
+    "parking": "駐車場",
+    "entry_fee": "入場料",
+    "things_to_see": "見どころ",
+    "observations": "備考"
+  },
+  "filters": {
+    "stars": "星",
+    "star": "星",
+    "forks": "フォーク",
+    "fork": "フォーク",
+    "filter": "フィルター",
+    "destination": "目的地"
+  },
+  "video": {
+    "featured": "注目",
+    "discover_tunisia": "チュニジアを発見"
+  },
+  "read_aloud": "音声読み上げ",
+  "stop": "停止"
+
+}

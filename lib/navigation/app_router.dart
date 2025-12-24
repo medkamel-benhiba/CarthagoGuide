@@ -1,9 +1,9 @@
-// lib/router/app_router.dart
 import 'package:CarthagoGuide/screens/activities_screen.dart';
 import 'package:CarthagoGuide/screens/chatbot_screen.dart';
 import 'package:CarthagoGuide/screens/circuits_screen.dart';
 import 'package:CarthagoGuide/screens/cultures_screen.dart';
 import 'package:CarthagoGuide/screens/destinations_screen.dart';
+import 'package:CarthagoGuide/screens/eventDetails_screen.dart';
 import 'package:CarthagoGuide/screens/events_screen.dart';
 import 'package:CarthagoGuide/screens/guestHouse_screen.dart';
 import 'package:CarthagoGuide/screens/home_screen.dart';
@@ -20,14 +20,12 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/splash',
     routes: [
-      // Splash Screen
       GoRoute(
         path: '/splash',
         name: 'splash',
         builder: (context, state) => const SplashScreen(),
       ),
 
-      // Main Container with Shell Route for drawer
       ShellRoute(
         builder: (context, state, child) {
           return MainScreenContainer(child: child);
@@ -110,7 +108,7 @@ class AppRouter {
             builder: (context, state) => const ChatBotScreen(),
           ),
 
-          // Circuit Details Screen (with parameter)
+          // Circuit Details Screen
           GoRoute(
             path: '/circuit-details/:id',
             name: 'circuitDetails',
@@ -121,11 +119,21 @@ class AppRouter {
               );
             },
           ),
+          // event Details Screen
+          GoRoute(
+            path: '/event-details/:id',
+            name: 'eventDetails',
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>?;
+              return EventDetailsScreen(
+                event: extra?['event'],
+              );
+            },
+          ),
         ],
       ),
     ],
 
-    // Error handling
     errorBuilder: (context, state) => Scaffold(
       body: Center(
         child: Text('Page not found: ${state.matchedLocation}'),

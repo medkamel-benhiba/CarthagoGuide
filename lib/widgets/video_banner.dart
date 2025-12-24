@@ -1,11 +1,15 @@
 import 'package:CarthagoGuide/constants/theme.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoBanner extends StatefulWidget {
   final AppTheme theme;
 
-  const VideoBanner({super.key, required this.theme});
+  const VideoBanner({
+    super.key,
+    required this.theme,
+  });
 
   @override
   State<VideoBanner> createState() => _VideoBannerState();
@@ -22,8 +26,10 @@ class _VideoBannerState extends State<VideoBanner> {
       ..setLooping(true)
       ..setVolume(0)
       ..initialize().then((_) {
-        setState(() {});
-        _controller.play();
+        if (mounted) {
+          setState(() {});
+          _controller.play();
+        }
       });
   }
 
@@ -37,8 +43,13 @@ class _VideoBannerState extends State<VideoBanner> {
   Widget build(BuildContext context) {
     final theme = widget.theme;
 
+    // RTL detection (easy_localization compatible)
+    final bool isRTL =
+        context.locale.languageCode == 'ar';
+
     return Stack(
       children: [
+        // VIDEO
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: _controller.value.isInitialized
@@ -60,40 +71,53 @@ class _VideoBannerState extends State<VideoBanner> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             gradient: LinearGradient(
-              colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+              colors: [
+                Colors.black.withOpacity(0.6),
+                Colors.transparent,
+              ],
               begin: Alignment.bottomCenter,
               end: Alignment.topCenter,
             ),
           ),
         ),
 
-        // text
+        // TEXT CONTENT (RTL SAFE)
         Positioned(
           bottom: 20,
-          left: 20,
+          left: isRTL ? null : 20,
+          right: isRTL ? 20 : null,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+            isRTL ? CrossAxisAlignment.start : CrossAxisAlignment.start,
             children: [
+              // FEATURED BADGE
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: theme.primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  "En Vedette",
-                  style: TextStyle(
+                child: Text(
+                  "video.featured".tr(),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
+
               const SizedBox(height: 8),
-              const Text(
-                "Découvrir La Tunisie",
-                style: TextStyle(
+
+              // TITLE
+              Text(
+                "video.discover_tunisia".tr(),
+                textAlign:
+                isRTL ? TextAlign.right : TextAlign.left,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -102,7 +126,6 @@ class _VideoBannerState extends State<VideoBanner> {
             ],
           ),
         ),
-
       ],
     );
   }

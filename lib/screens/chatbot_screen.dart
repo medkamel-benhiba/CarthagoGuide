@@ -1,7 +1,6 @@
 import 'package:CarthagoGuide/helpers/chatbot_helpers.dart';
 import 'package:CarthagoGuide/services/api_chatbot.dart';
 import 'package:CarthagoGuide/widgets/chatbot/ChatMessagesList.dart';
-import 'package:CarthagoGuide/widgets/chatbot/ChatQuickSuggestion.dart';
 import 'package:CarthagoGuide/widgets/chatbot/chat_appBar.dart';
 import 'package:flutter/material.dart';
 import 'package:CarthagoGuide/constants/theme.dart';
@@ -10,6 +9,7 @@ import 'package:CarthagoGuide/widgets/chatbot/chat_input_field.dart';
 import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ChatBotScreen extends StatefulWidget {
   const ChatBotScreen({super.key});
@@ -49,8 +49,7 @@ class _ChatBotScreenState extends State<ChatBotScreen>
           _isInitialized = true;
           _messages.add(
             ChatMessage(
-              text:
-                  "Bonjour ! Je suis votre assistant Carthago Guide. Comment puis-je vous aider à explorer la Tunisie aujourd'hui ?",
+              text: 'chatbot.welcome'.tr(),
               isUser: false,
               timestamp: DateTime.now(),
             ),
@@ -172,7 +171,7 @@ class _ChatBotScreenState extends State<ChatBotScreen>
                         onPressed: _startNewConversation,
                         icon: Icon(Icons.add, color: theme.primary),
                         label: Text(
-                          'Nouvelle Conversation',
+                          'chatbot.new_conversation'.tr(),
                           style: TextStyle(color: theme.primary),
                         ),
                       ),
@@ -181,7 +180,7 @@ class _ChatBotScreenState extends State<ChatBotScreen>
                         onPressed: _showConversationHistory,
                         icon: Icon(Icons.history, color: theme.primary),
                         label: Text(
-                          'Historique',
+                          'chatbot.history'.tr(),
                           style: TextStyle(color: theme.primary),
                         ),
                       ),

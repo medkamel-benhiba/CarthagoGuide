@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:CarthagoGuide/constants/theme.dart';
 
@@ -126,31 +127,31 @@ class _CategoryRowWidgetState extends State<CategoryRowWidget>
     final categories = [
       {
         'icon': Icons.hotel,
-        'label': 'Hotels',
+        'label': 'home.categories.hotels'.tr(),
         'onTap': widget.onHotelsTap,
         'isSpecial': false,
       },
       {
         'icon': Icons.restaurant,
-        'label': 'Restaurants',
+        'label': 'home.categories.restaurants'.tr(),
         'onTap': widget.onRestaurantsTap,
         'isSpecial': false,
       },
       {
         'icon': Icons.smart_toy_outlined,
-        'label': 'ChatBot',
+        'label': 'home.categories.chatbot'.tr(),
         'onTap': widget.onChatBotTap,
         'isSpecial': true,
       },
       {
         'icon': Icons.map,
-        'label': 'Circuits',
+        'label': 'home.categories.circuits'.tr(),
         'onTap': widget.onCircuitsTap,
         'isSpecial': false,
       },
       {
         'icon': Icons.location_on,
-        'label': 'Destinations',
+        'label': 'home.categories.destinations'.tr(),
         'onTap': widget.onDestinationsTap,
         'isSpecial': false,
       },

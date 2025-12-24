@@ -6,6 +6,7 @@ import 'package:CarthagoGuide/widgets/destination_card.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../providers/destination_provider.dart';
 
 class SkeletonBox extends StatefulWidget {
@@ -72,7 +73,6 @@ class _SkeletonBoxState extends State<SkeletonBox>
   }
 }
 
-
 class DestinationScreen extends StatefulWidget {
   const DestinationScreen({super.key});
 
@@ -92,7 +92,6 @@ class _DestinationScreenState extends State<DestinationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image Placeholder
           Expanded(
             child: SkeletonBox(
               theme: theme,
@@ -102,7 +101,6 @@ class _DestinationScreenState extends State<DestinationScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          // Title Line
           SkeletonBox(theme: theme, width: double.infinity, height: 18, radius: 4),
         ],
       ),
@@ -114,19 +112,14 @@ class _DestinationScreenState extends State<DestinationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // SearchBar Skeleton
           SkeletonBox(theme: theme, width: double.infinity, height: 50, radius: 10),
           const SizedBox(height: 25),
-
-          // Results Count Skeleton
           SkeletonBox(theme: theme, width: 120, height: 16, radius: 4),
           const SizedBox(height: 15),
-
-          // Grid Skeleton
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: 6, // Show 6 skeleton items
+            itemCount: 6,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 15.0,
@@ -139,14 +132,14 @@ class _DestinationScreenState extends State<DestinationScreen> {
       ),
     );
   }
-  // ------------------------------------
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
-    final destinationProvider = Provider.of<DestinationProvider>(context);
-
+    final destinationProvider = context.watch<DestinationProvider>();
     final destinations = destinationProvider.filteredDestinations;
+    final Locale = context.locale;
+
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -155,10 +148,10 @@ class _DestinationScreenState extends State<DestinationScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: theme.text),
-            onPressed: _toggleDrawer
+          onPressed: _toggleDrawer,
         ),
         title: Text(
-          "Destinations",
+          'destinations.title'.tr(),
           style: TextStyle(color: theme.primary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -168,8 +161,8 @@ class _DestinationScreenState extends State<DestinationScreen> {
           : destinationProvider.error != null
           ? Center(
         child: Text(
-          destinationProvider.error!,
-          style: TextStyle(color: Color(0xFF6C0606)),
+          destinationProvider.error!.tr(),
+          style: TextStyle(color: const Color(0xFF6C0606)),
         ),
       )
           : SingleChildScrollView(
@@ -181,15 +174,15 @@ class _DestinationScreenState extends State<DestinationScreen> {
             children: [
               SearchBarWidget(
                 theme: theme,
-                hint: "Rechercher une destination...",
+                hint: 'common.search_placeholder'.tr(),
                 onChanged: (value) {
                   destinationProvider.setSearchQuery(value);
                 },
               ),
               const SizedBox(height: 25),
-
               Text(
-                "Résultats (${destinations.length})",
+                'activities.results'
+                    .tr(namedArgs: {'count': destinations.length.toString()}),
                 style: TextStyle(
                   color: theme.text.withOpacity(0.6),
                   fontWeight: FontWeight.w300,
@@ -197,13 +190,11 @@ class _DestinationScreenState extends State<DestinationScreen> {
                 ),
               ),
               const SizedBox(height: 15),
-
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: destinations.length,
-                gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 15.0,
                   mainAxisSpacing: 15.0,
@@ -213,20 +204,18 @@ class _DestinationScreenState extends State<DestinationScreen> {
                   final d = destinations[index];
                   return DestinationCardWidget(
                     theme: theme,
-                    title: d.name,
-                    imgUrl: d.vignette ??
-                        "assets/images/placeholder.jpg",
+                    title: d.getName(context.locale) ?? 'activities.untitled'.tr(),
+                    imgUrl: d.vignette ?? "assets/images/placeholder.jpg",
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              DestinationDetailsScreen(
-                                title: d.name,
-                                description: d.descriptionMobile ?? "",
-                                gallery: d.gallery,
-                                destinationId: d.id,
-                              ),
+                          builder: (context) => DestinationDetailsScreen(
+                            title: d.getName(context.locale) ?? 'activities.untitled'.tr(),
+                            description: d.getDescription(context.locale) ?? "",
+                            gallery: d.gallery,
+                            destinationId: d.id,
+                          ),
                         ),
                       );
                     },

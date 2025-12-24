@@ -1,9 +1,10 @@
+import 'dart:async'; // Required for Timer
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/voyage.dart';
 import 'package:CarthagoGuide/widgets/contact_section.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 
@@ -24,11 +25,40 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
   int _selectedDayIndex = 0;
   final PageController _imagePageController = PageController();
   int _currentImageIndex = 0;
+  Timer? _autoSlideTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoSlide();
+  }
 
   @override
   void dispose() {
+    _autoSlideTimer?.cancel();
     _imagePageController.dispose();
     super.dispose();
+  }
+
+  void _startAutoSlide() {
+    if (widget.circuit.images != null && widget.circuit.images!.length > 1) {
+      _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (Timer timer) {
+        if (_imagePageController.hasClients) {
+          int nextPage = _currentImageIndex + 1;
+
+          // Loop back to the first image
+          if (nextPage >= widget.circuit.images!.length) {
+            nextPage = 0;
+          }
+
+          _imagePageController.animateToPage(
+            nextPage,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOutQuad,
+          );
+        }
+      });
+    }
   }
 
   String _stripHtmlTags(String htmlText) {
@@ -54,7 +84,6 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
 
     try {
       final p = prices.first;
-
       final start = DateTime.tryParse(p.dateStart);
       final end = DateTime.tryParse(p.dateEnd);
 
@@ -67,18 +96,18 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     final size = MediaQuery.of(context).size;
     final images = widget.circuit.images ?? [];
+    final localizedProgram = widget.circuit.getLocalizedProgram(context.locale);
 
     return Scaffold(
       backgroundColor: theme.background,
       body: Stack(
         children: [
-          // Image Carousel Header
+          // Header Image Slider
           Container(
             height: size.height * 0.45,
             color: Colors.black,
@@ -106,17 +135,17 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
                     );
                   },
                 ),
-                // Image indicator dots
                 if (images.length > 1)
                   Positioned(
-                    bottom: 20,
+                    bottom: 60,
                     left: 0,
                     right: 0,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
                         images.length,
-                            (index) => Container(
+                            (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           width: _currentImageIndex == index ? 24 : 8,
                           height: 8,
@@ -141,14 +170,9 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _DetailActionButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: () => Navigator.pop(context),
-                  ),
-                ],
+              child: _DetailActionButton(
+                icon: Icons.arrow_back_ios_new_rounded,
+                onTap: () => Navigator.pop(context),
               ),
             ),
           ),
@@ -171,9 +195,8 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Circuit Name
                     Text(
-                      widget.circuit.name,
+                      widget.circuit.getName(context.locale),
                       style: TextStyle(
                         color: theme.text,
                         fontSize: 28,
@@ -183,7 +206,6 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    // Quick Info Cards
                     _QuickInfoSection(
                       theme: theme,
                       duration: widget.circuit.number ?? '0',
@@ -195,12 +217,10 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
                       dateRange: _formatDateRange(widget.circuit.price),
                     ),
 
-
                     const SizedBox(height: 30),
 
-                    // Description
                     Text(
-                      "À propos du Circuit",
+                      'details.about_circuit'.tr(),
                       style: TextStyle(
                         color: theme.text,
                         fontSize: 20,
@@ -210,9 +230,9 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
                     const SizedBox(height: 10),
                     Builder(
                       builder: (context) {
-                        final fullText = widget.circuit.description ?? '';
+                        final fullText = widget.circuit.getDescription(context.locale) ?? '';
                         final truncatedText = fullText.length > 200
-                            ? fullText.substring(0, 200) + "..."
+                            ? "${fullText.substring(0, 200)}..."
                             : fullText;
 
                         return Column(
@@ -236,7 +256,7 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(top: 5.0),
                                   child: Text(
-                                    _isDescriptionExpanded ? "Afficher moins" : "Afficher plus",
+                                    _isDescriptionExpanded ? 'details.show_less'.tr() : 'details.show_more'.tr(),
                                     style: TextStyle(
                                       color: theme.primary,
                                       fontSize: 14,
@@ -252,11 +272,10 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
 
                     const SizedBox(height: 30),
 
-                    // Program/Itinerary
-                    if (widget.circuit.programe != null && widget.circuit.programe!.isNotEmpty)
+                    if (localizedProgram.isNotEmpty)
                       _ProgramSection(
                         theme: theme,
-                        program: widget.circuit.programe!,
+                        program: localizedProgram,
                         selectedIndex: _selectedDayIndex,
                         onDaySelected: (index) {
                           setState(() {
@@ -267,18 +286,13 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
 
                     const SizedBox(height: 30),
 
-                    // Highlights
                     _HighlightsSection(theme: theme),
 
                     const SizedBox(height: 30),
 
-                    // Contact Information
                     _ContactSection(theme: theme, circuit: widget.circuit),
 
                     const SizedBox(height: 20),
-
-                    // Book Now Button
-                    _BookNowButton(theme: theme),
                   ],
                 ),
               ),
@@ -289,6 +303,9 @@ class _CircuitDetailsScreenState extends State<CircuitDetailsScreen> {
     );
   }
 }
+
+// Helper Widgets (Action Button, Info Card, etc.) remain largely the same
+// but ensure they are provided in the same file to keep the code "Full".
 
 class _DetailActionButton extends StatelessWidget {
   final IconData icon;
@@ -333,8 +350,8 @@ class _QuickInfoSection extends StatelessWidget {
           child: _InfoCard(
             theme: theme,
             icon: Icons.calendar_today,
-            label: 'Durée',
-            value: '$duration Jours',
+            label: 'details.duration'.tr(),
+            value: '$duration ${'circuits.days'.tr()}',
           ),
         ),
         const SizedBox(width: 12),
@@ -342,7 +359,7 @@ class _QuickInfoSection extends StatelessWidget {
           child: _InfoCard(
             theme: theme,
             icon: Icons.payments_outlined,
-            label: 'Prix',
+            label: 'details.price'.tr(),
             value: price,
           ),
         ),
@@ -404,7 +421,7 @@ class _InfoCard extends StatelessWidget {
 
 class _ProgramSection extends StatelessWidget {
   final AppTheme theme;
-  final List<Program> program; // Strongly typed
+  final List<Program> program;
   final int selectedIndex;
   final Function(int) onDaySelected;
 
@@ -434,7 +451,7 @@ class _ProgramSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Programme du Circuit",
+          'details.circuit_program'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,
@@ -442,8 +459,6 @@ class _ProgramSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 15),
-
-        // Day selector chips
         SizedBox(
           height: 40,
           child: ListView.builder(
@@ -465,7 +480,7 @@ class _ProgramSection extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      'Jour ${index + 1}',
+                      '${'details.day'.tr()} ${index + 1}',
                       style: TextStyle(
                         color: isSelected ? Colors.white : theme.text,
                         fontWeight: FontWeight.w600,
@@ -478,10 +493,7 @@ class _ProgramSection extends StatelessWidget {
             },
           ),
         ),
-
         const SizedBox(height: 20),
-
-        // Selected day details
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -523,26 +535,24 @@ class _ProgramSection extends StatelessWidget {
   }
 }
 
-
 class _HighlightsSection extends StatelessWidget {
   final AppTheme theme;
-
   const _HighlightsSection({required this.theme});
 
   @override
   Widget build(BuildContext context) {
     final highlights = [
-      {'icon': Icons.hotel, 'text': 'Hébergement inclus'},
-      {'icon': Icons.restaurant, 'text': 'Repas inclus'},
-      {'icon': Icons.directions_bus, 'text': 'Transport organisé'},
-      {'icon': Icons.tour, 'text': 'Guide professionnel'},
+      {'icon': Icons.hotel, 'text': 'details.accommodation_included'.tr()},
+      {'icon': Icons.restaurant, 'text': 'details.meals_included'.tr()},
+      {'icon': Icons.directions_bus, 'text': 'details.transport_organized'.tr()},
+      {'icon': Icons.tour, 'text': 'details.professional_guide'.tr()},
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Ce qui est inclus",
+          'details.whats_included'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,
@@ -596,7 +606,7 @@ class _ContactSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Contact",
+          'details.contact'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,
@@ -611,53 +621,6 @@ class _ContactSection extends StatelessWidget {
           isLink: true,
         ),
       ],
-    );
-  }
-}
-
-class _BookNowButton extends StatelessWidget {
-  final AppTheme theme;
-
-  const _BookNowButton({required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [theme.primary, theme.primary.withOpacity(0.8)],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: theme.primary.withOpacity(0.4),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            // Handle booking
-          },
-          borderRadius: BorderRadius.circular(28),
-          child: const Center(
-            child: Text(
-              'Réserver Maintenant',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

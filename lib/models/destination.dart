@@ -252,19 +252,19 @@ class Destination {
   String? getDescription(Locale locale) {
     switch (locale.languageCode) {
       case 'en':
-        return descriptionEn ?? description;
+        return descriptionEn ?? descriptionMobile;
       case 'ar':
-        return descriptionAr ?? description;
+        return descriptionAr ?? descriptionMobile;
       case 'ru':
-        return descriptionRu ?? description;
+        return descriptionRu ?? descriptionMobile;
       case 'zh':
-        return descriptionZh ?? description;
+        return descriptionZh ?? descriptionMobile;
       case 'ko':
-        return descriptionKo ?? description;
+        return descriptionKo ?? descriptionMobile;
       case 'ja':
-        return descriptionJa ?? description;
+        return descriptionJa ?? descriptionMobile;
       default:
-        return description;
+        return descriptionMobile;
     }
   }
 

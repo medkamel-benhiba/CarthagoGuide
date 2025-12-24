@@ -13,7 +13,8 @@
       "destinations": "Destinations",
       "circuits": "Tours",
       "events": "Events",
-      "gallery": "Gallery"
+      "gallery": "Gallery",
+      "moments": "Highlights"
     },
     "experiences": {
       "adventure": "Adventure",
@@ -30,8 +31,29 @@
     "loading": "Loading...",
     "no_data": "No data available",
     "error": "Error",
-    "check_connection": "Check your internet connection and try again."
+    "check_connection": "Check your internet connection and try again.",
+    "cancel": "Cancel",
+    "search_placeholder": "Search...",
+    "clear_filters": "Clear filters"
   },
+  "drawer": {
+    "settings": "Settings",
+    "home": "Home",
+    "destinations": "Destinations",
+    "hotels": "Hotels",
+    "guest_houses": "Guest Houses",
+    "restaurants": "Restaurants",
+    "activities": "Activities",
+    "events": "Events",
+    "cultures": "Cultures",
+    "circuits": "Tours",
+    "sponsors": "Sponsors",
+    "choose_theme": "Choose Theme",
+    "exit_title": "Exit app?",
+    "exit_message": "Are you sure you want to exit Carthago Guide?",
+    "exit_confirm": "Yes, Exit"
+  },
+  "language": "Language",
   "destinations": {
     "title": "Destinations",
     "nearby": "Nearby"
@@ -39,7 +61,9 @@
   "circuits": {
     "title": "Tours",
     "days": "days",
-    "duration": "Duration"
+    "duration": "Duration",
+    "featured": "Featured Tours",
+    "all": "All Tours"
   },
   "events": {
     "title": "Events",
@@ -47,9 +71,108 @@
     "no_location": "Location not specified",
     "no_date": "Date not specified"
   },
+  "activities": {
+    "title": "Activities",
+    "retry": "Retry",
+    "results": "Results ({count})",
+    "check_connection": "Check your internet connection and try again.",
+    "clear_search": "Clear search",
+    "untitled": "Untitled"
+  },
   "errors": {
     "fetch_failed": "Failed to load data",
     "network_error": "Connection error",
     "empty_list": "No items available"
-  }
+  },
+  "hotels": {
+    "title": "Hotels",
+    "unknown_destination": "Unknown destination",
+    "no_results": "No hotels found",
+    "try_different_search": "Try adjusting your search or filters"
+
+  },
+  "restaurants": {
+    "title": "Restaurants",
+    "unknown": "Unknown"
+  },
+  "guest_houses": {
+    "title": "Guest Houses"
+  },
+  "cultures": {
+    "title": "Cultures",
+    "discover": "Discover Tunisian culture",
+    "monuments": "Monuments",
+    "museums": "Museums",
+    "festival": "Festival",
+    "festivals": "Festivals",
+    "artisanat": "Handicrafts",
+    "tunisia_chronicles": "Tunisia Chronicles"
+  },
+  "sponsors": {
+    "title": "Our Partners",
+    "thanks": "Thanks to our partners",
+    "support_message": "They trust us and support our mission",
+    "become_partner": "Want to become a partner?",
+    "contact_us": "Contact us to learn more"
+  },
+  "chatbot": {
+    "welcome": "Hello! I am your Carthago Guide assistant. How can I help you explore Tunisia today?",
+    "new_conversation": "New Conversation",
+    "history": "History"
+  },
+  "details": {
+    "amenities": "Amenities",
+    "wifi": "WiFi",
+    "spa": "Spa",
+    "restaurant": "Restaurant",
+    "pool": "Pool",
+    "description": "Description",
+    "show_more": "Show more",
+    "show_less": "Show less",
+    "gallery": "Photo Gallery",
+    "contact": "Contact",
+    "features": "Features",
+    "cuisine": "Cuisine",
+    "delivery": "Delivery",
+    "terrace": "Terrace",
+    "bar": "Bar",
+    "opening_hours": "Opening Hours",
+    "about": "About",
+    "location_unavailable": "Location not available",
+    "destination_details": "Destination Details:",
+    "no_hotels": "No hotels available for this destination",
+    "no_restaurants": "No restaurants available for this destination",
+    "about_circuit": "About the Tour",
+    "duration": "Duration",
+    "price": "Price",
+    "circuit_program": "Tour Program",
+    "day": "Day",
+    "whats_included": "What's Included",
+    "accommodation_included": "Accommodation included",
+    "meals_included": "Meals included",
+    "transport_organized": "Organized transport",
+    "professional_guide": "Professional guide",
+    "free": "Free",
+    "date_unavailable": "Date not available",
+    "breakfast": "Breakfast",
+    "ac": "Air conditioning",
+    "parking": "Parking",
+    "entry_fee": "Entry Fee",
+    "things_to_see": "Things to See",
+    "observations": "Observations"
+  },
+  "filters": {
+    "stars": "Stars",
+    "star": "Star",
+    "forks": "Forks",
+    "fork": "Fork",
+    "filter": "Filter",
+    "destination": "Destination"
+  },
+  "video": {
+    "featured": "Featured",
+    "discover_tunisia": "Discover Tunisia"
+  },
+  "read_aloud": "Read aloud",
+  "stop": "Stop"
 }

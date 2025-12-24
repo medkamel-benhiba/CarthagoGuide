@@ -14,8 +14,8 @@ class Musees {
   final String? droitsEntreeKo;
   final String? droitsEntreeEn;
   final List<String> horairesOuverture;
-  final String? lat;
-  final String? lng;
+  final double? lat;
+  final double? lng;
   final List<String> commodites;
   final List<String> images;
   final String vignette;
@@ -148,8 +148,8 @@ class Musees {
       aVoir: parseList(json['A_voir']),
       droitsEntree: json['Droits_d_entre']?.toString() ?? '',
       horairesOuverture: parseList(json['Horaires_d_ouverture']),
-      lat: json['lat'],
-      lng: json['lng'],
+      lat: double.tryParse(json['lat']?.toString() ?? ''),
+      lng: double.tryParse(json['lng']?.toString() ?? ''),
       commodites: parseList(json['Commodites']),
       images: parseList(json['images']),
       vignette: json['vignette']?.toString() ?? '',
@@ -205,7 +205,6 @@ class Musees {
       droitsEntreeZh: json['Droits_d_entre_zh'],
       droitsEntreeKo: json['Droits_d_entre_ko'],
       droitsEntreeEn: json['Droits_d_entre_en'],
-
     );
   }
 

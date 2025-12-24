@@ -1,0 +1,179 @@
+{
+  "app_name": "CarthagoGuide",
+  "home": {
+    "search_placeholder": "搜索目的地、酒店...",
+    "categories": {
+      "destinations": "目的地",
+      "hotels": "酒店",
+      "restaurants": "餐厅",
+      "circuits": "线路",
+      "chatbot": "聊天助手"
+    },
+    "sections": {
+      "destinations": "目的地",
+      "circuits": "线路",
+      "events": "活动",
+      "gallery": "画廊",
+      "moments": "精彩瞬间"
+    },
+    "experiences": {
+      "adventure": "冒险",
+      "kairouan_vibes": "凯鲁万风情",
+      "local_food": "当地美食",
+      "desert_trip": "沙漠之旅",
+      "beach_day": "海滩时光",
+      "museums": "博物馆"
+    }
+  },
+  "common": {
+    "see_more": "查看更多",
+    "retry": "重试",
+    "loading": "加载中...",
+    "no_data": "暂无数据",
+    "error": "错误",
+    "check_connection": "请检查您的网络连接后重试。",
+    "cancel": "取消",
+    "search_placeholder": "搜索...",
+    "clear_filters": "清除筛选"
+
+  },
+  "drawer": {
+    "settings": "设置",
+    "home": "首页",
+    "destinations": "目的地",
+    "hotels": "酒店",
+    "guest_houses": "民宿",
+    "restaurants": "餐厅",
+    "activities": "活动",
+    "events": "活动",
+    "cultures": "文化",
+    "circuits": "线路",
+    "sponsors": "合作伙伴",
+    "choose_theme": "选择主题",
+    "exit_title": "退出应用？",
+    "exit_message": "确定要退出 Carthago Guide 吗？",
+    "exit_confirm": "是的，退出"
+  },
+  "language": "语言",
+  "destinations": {
+    "title": "目的地",
+    "nearby": "附近"
+  },
+  "circuits": {
+    "title": "线路",
+    "days": "天",
+    "duration": "时长",
+    "featured": "精选线路",
+    "all": "所有线路"
+  },
+  "events": {
+    "title": "活动",
+    "no_title": "无标题活动",
+    "no_location": "未指定地点",
+    "no_date": "未指定日期"
+  },
+  "activities": {
+    "title": "活动",
+    "retry": "重试",
+    "results": "结果（{count}）",
+    "check_connection": "请检查网络连接后重试。",
+    "clear_search": "清除搜索",
+    "untitled": "无标题"
+  },
+  "errors": {
+    "fetch_failed": "加载数据失败",
+    "network_error": "网络错误",
+    "empty_list": "暂无内容"
+  },
+  "hotels": {
+    "title": "酒店",
+    "unknown_destination": "未知目的地",
+    "no_results": "未找到酒店",
+    "try_different_search": "请尝试调整搜索或筛选条件"
+  },
+  "restaurants": {
+    "title": "餐厅",
+    "unknown": "未知"
+  },
+  "guest_houses": {
+    "title": "民宿"
+  },
+  "cultures": {
+    "title": "文化",
+    "discover": "探索突尼斯文化",
+    "monuments": "古迹",
+    "museums": "博物馆",
+    "festival": "节日",
+    "festivals": "节庆",
+    "artisanat": "手工艺",
+    "tunisia_chronicles": "突尼斯纪事"
+  },
+  "sponsors": {
+    "title": "我们的合作伙伴",
+    "thanks": "感谢我们的合作伙伴",
+    "support_message": "他们信任并支持我们的使命",
+    "become_partner": "想成为合作伙伴吗？",
+    "contact_us": "联系我们了解更多"
+  },
+  "chatbot": {
+    "welcome": "您好！我是 Carthago Guide 智能助手，如何帮助您探索突尼斯？",
+    "new_conversation": "新对话",
+    "history": "历史记录"
+  },
+  "details": {
+    "amenities": "设施",
+    "wifi": "无线网络",
+    "spa": "水疗",
+    "restaurant": "餐厅",
+    "pool": "游泳池",
+    "description": "描述",
+    "show_more": "显示更多",
+    "show_less": "显示更少",
+    "gallery": "照片库",
+    "contact": "联系方式",
+    "features": "特色",
+    "cuisine": "美食",
+    "delivery": "外送",
+    "terrace": "露台",
+    "bar": "酒吧",
+    "opening_hours": "营业时间",
+    "about": "关于",
+    "location_unavailable": "无法获取位置",
+    "destination_details": "目的地详情：",
+    "no_hotels": "该目的地暂无酒店",
+    "no_restaurants": "该目的地暂无餐厅",
+    "about_circuit": "线路介绍",
+    "duration": "时长",
+    "price": "价格",
+    "circuit_program": "线路行程",
+    "day": "第",
+    "whats_included": "包含内容",
+    "accommodation_included": "包含住宿",
+    "meals_included": "包含餐食",
+    "transport_organized": "已安排交通",
+    "professional_guide": "专业导游",
+    "free": "免费",
+    "date_unavailable": "日期不可用",
+    "breakfast": "早餐",
+    "ac": "空调",
+    "parking": "停车场",
+    "entry_fee": "门票",
+    "things_to_see": "景点",
+    "observations": "备注"
+  },
+  "filters": {
+    "stars": "星级",
+    "star": "星",
+    "forks": "叉",
+    "fork": "叉",
+    "filter": "筛选",
+    "destination": "目的地"
+  },
+  "video": {
+    "featured": "精选",
+    "discover_tunisia": "探索突尼斯"
+  },
+  "read_aloud": "语音朗读",
+  "stop": "停止"
+
+}

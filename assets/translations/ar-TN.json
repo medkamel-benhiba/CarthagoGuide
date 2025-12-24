@@ -1,55 +1,180 @@
 {
-  "app_name": "دليل قرطاج",
+  "app_name": "CarthagoGuide",
   "home": {
-    "search_placeholder": "البحث عن الوجهات، الفنادق...",
+    "search_placeholder": "ابحث عن الوجهات، الفنادق...",
     "categories": {
       "destinations": "الوجهات",
       "hotels": "الفنادق",
       "restaurants": "المطاعم",
       "circuits": "الجولات",
-      "chatbot": "المساعد"
+      "chatbot": "المساعد\n الذكي"
     },
     "sections": {
       "destinations": "الوجهات",
       "circuits": "الجولات",
       "events": "الفعاليات",
-      "gallery": "المعرض"
+      "gallery": "المعرض",
+      "moments": "لحظات"
     },
     "experiences": {
-      "adventure": "المغامرة",
+      "adventure": "مغامرة",
       "kairouan_vibes": "أجواء القيروان",
       "local_food": "الطعام المحلي",
       "desert_trip": "رحلة الصحراء",
-      "beach_day": "يوم على الشاطئ",
+      "beach_day": "يوم الشاطئ",
       "museums": "المتاحف"
     }
   },
   "common": {
-    "see_more": "عرض المزيد",
-    "retry": "إعادة المحاولة",
-    "loading": "جاري التحميل...",
-    "no_data": "لا توجد بيانات متاحة",
+    "see_more": "المزيد",
+    "retry": "أعد المحاولة",
+    "loading": "جارٍ التحميل...",
+    "no_data": "لا توجد بيانات",
     "error": "خطأ",
-    "check_connection": "تحقق من اتصالك بالإنترنت وحاول مرة أخرى."
+    "check_connection": "تحقق من اتصال الإنترنت وحاول مرة أخرى.",
+    "cancel": "إلغاء",
+    "search_placeholder": "ابحث...",
+    "clear_filters": "مسح المرشحات"
+
   },
+  "drawer": {
+    "settings": "الإعدادات",
+    "home": "الرئيسية",
+    "destinations": "الوجهات",
+    "hotels": "الفنادق",
+    "guest_houses": "بيوت الضيافة",
+    "restaurants": "المطاعم",
+    "activities": "الأنشطة",
+    "events": "الفعاليات",
+    "cultures": "الثقافات",
+    "circuits": "الجولات",
+    "sponsors": "الرعاة",
+    "choose_theme": "اختر السمة",
+    "exit_title": "الخروج من التطبيق؟",
+    "exit_message": "هل أنت متأكد أنك تريد الخروج من Carthago Guide؟",
+    "exit_confirm": "نعم، الخروج"
+  },
+  "language": "اللغة",
   "destinations": {
     "title": "الوجهات",
-    "nearby": "قريب منك"
+    "nearby": "بالقرب"
   },
   "circuits": {
     "title": "الجولات",
     "days": "أيام",
-    "duration": "المدة"
+    "duration": "المدة",
+    "featured": "الجولات المميزة",
+    "all": "جميع الجولات"
   },
   "events": {
     "title": "الفعاليات",
-    "no_title": "حدث بدون عنوان",
+    "no_title": "فعالية بدون عنوان",
     "no_location": "الموقع غير محدد",
     "no_date": "التاريخ غير محدد"
+  },
+  "activities": {
+    "title": "الأنشطة",
+    "retry": "أعد المحاولة",
+    "results": "النتائج ({count})",
+    "check_connection": "تحقق من اتصال الإنترنت وحاول مرة أخرى.",
+    "clear_search": "مسح البحث",
+    "untitled": "بدون عنوان"
   },
   "errors": {
     "fetch_failed": "فشل تحميل البيانات",
     "network_error": "خطأ في الاتصال",
-    "empty_list": "لا توجد عناصر متاحة"
-  }
+    "empty_list": "لا توجد عناصر"
+  },
+  "hotels": {
+    "title": "الفنادق",
+    "unknown_destination": "وجهة غير معروفة",
+    "no_results": "لم يتم العثور على فنادق",
+    "try_different_search": "حاول تعديل البحث أو الفلاتر"
+
+  },
+  "restaurants": {
+    "title": "المطاعم",
+    "unknown": "غير معروف"
+  },
+  "guest_houses": {
+    "title": "بيوت الضيافة"
+  },
+  "cultures": {
+    "title": "الثقافات",
+    "discover": "اكتشف الثقافة التونسية",
+    "monuments": "المعالم",
+    "museums": "المتاحف",
+    "festival": "المهرجانات",
+    "festivals": "المهرجانات",
+    "artisanat": "الحرف اليدوية",
+    "tunisia_chronicles": "سجلات تونس"
+  },
+  "sponsors": {
+    "title": "شركاؤنا",
+    "thanks": "شكراً لشركائنا",
+    "support_message": "يثقون بنا ويدعمون مهمتنا",
+    "become_partner": "هل تريد أن تصبح شريكاً؟",
+    "contact_us": "اتصل بنا لمعرفة المزيد"
+  },
+  "chatbot": {
+    "welcome": "مرحباً! أنا مساعدك في Carthago Guide. كيف يمكنني مساعدتك في استكشاف تونس اليوم؟",
+    "new_conversation": "محادثة جديدة",
+    "history": "السجل"
+  },
+  "details": {
+    "amenities": "المرافق",
+    "wifi": "واي فاي",
+    "spa": "سبا",
+    "restaurant": "مطعم",
+    "pool": "مسبح",
+    "description": "الوصف",
+    "show_more": "عرض المزيد",
+    "show_less": "عرض أقل",
+    "gallery": "معرض الصور",
+    "contact": "اتصل بنا",
+    "features": "المميزات",
+    "cuisine": "المطبخ",
+    "delivery": "توصيل",
+    "terrace": "تراس",
+    "bar": "بار",
+    "opening_hours": "ساعات العمل",
+    "about": "حول",
+    "location_unavailable": "الموقع غير متاح",
+    "destination_details": "تفاصيل الوجهة:",
+    "no_hotels": "لا توجد فنادق متاحة لهذه الوجهة",
+    "no_restaurants": "لا توجد مطاعم متاحة لهذه الوجهة",
+    "about_circuit": "حول الجولة",
+    "duration": "المدة",
+    "price": "السعر",
+    "circuit_program": "برنامج الجولة",
+    "day": "اليوم",
+    "whats_included": "ما هو مشمول",
+    "accommodation_included": "الإقامة مشمولة",
+    "meals_included": "الوجبات مشمولة",
+    "transport_organized": "النقل منظم",
+    "professional_guide": "مرشد محترف",
+    "free": "مجاني",
+    "date_unavailable": "التاريخ غير متاح",
+    "breakfast": "فطور",
+    "ac": "تكييف",
+    "parking": "موقف سيارات",
+    "entry_fee": "رسوم الدخول",
+    "things_to_see": "ما يجب رؤيته",
+    "observations": "ملاحظات"
+  },
+  "filters": {
+    "stars": "نجوم",
+    "star": "نجمة",
+    "forks": "شوك",
+    "fork": "شوكة",
+    "filter": "فلتر",
+    "destination": "الوجهة"
+  },
+  "video": {
+    "featured": "مميز",
+    "discover_tunisia": "اكتشف تونس"
+  },
+  "read_aloud": "تشغيل الصوت",
+  "stop": "إيقاف"
+
 }

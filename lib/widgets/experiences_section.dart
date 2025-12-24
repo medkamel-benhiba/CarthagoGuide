@@ -1,6 +1,7 @@
 import 'package:CarthagoGuide/widgets/reel_circle.dart';
 import 'package:CarthagoGuide/widgets/section_title.dart';
 import 'package:CarthagoGuide/widgets/story_viewer.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:CarthagoGuide/constants/theme.dart';
 
@@ -16,10 +17,11 @@ class ExperiencesReelSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionTitleWidget(title: "Moments", theme: theme),
+        SectionTitleWidget(title: "home.sections.moments".tr(), theme: theme),
         const SizedBox(height: 15),
         SizedBox(
           height: 105,
@@ -32,7 +34,6 @@ class ExperiencesReelSection extends StatelessWidget {
               final reel = experiencesReels[index];
               return GestureDetector(
                 onTap: () {
-                  // Navigate and pass ONLY the segments of the tapped reel
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => StoryViewerScreen(
@@ -45,8 +46,8 @@ class ExperiencesReelSection extends StatelessWidget {
                 },
                 child: ReelCircleWidget(
                   theme: theme,
-                  title: reel['title']!,
-                  imgUrl: reel['preview_image']!, // Use the preview image for the circle
+                  title: reel['title']??"",
+                  imgUrl: reel['preview_image']??"",
                 ),
               );
             },

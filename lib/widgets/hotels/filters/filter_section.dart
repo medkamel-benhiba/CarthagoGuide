@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'custom_filter_dropdown.dart';
-import 'package:collection/collection.dart'; // pour firstWhereOrNull
+import 'package:collection/collection.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 enum FilterType { hotel, restaurant, guestHouse, basic }
 
@@ -27,6 +28,8 @@ class FilterSection extends StatelessWidget {
     final bool isHotel = type == FilterType.hotel;
     final bool isRestaurant = type == FilterType.restaurant;
     final bool isGuestHouse = type == FilterType.guestHouse;
+    final locale = context.locale;
+
 
     if (isHotel) {
       return Consumer<HotelProvider>(
@@ -99,7 +102,8 @@ class FilterSection extends StatelessWidget {
         bool isRestaurant = false,
         bool isGuestHouse = false,
       }) {
-    final destinationProvider = Provider.of<DestinationProvider>(context, listen: false);
+    final destinationProvider =
+    Provider.of<DestinationProvider>(context, listen: false);
     final destinations = destinationProvider.destinations;
 
     final filters = _getProviderFilters(provider);
@@ -112,10 +116,12 @@ class FilterSection extends StatelessWidget {
         ? provider.minRating?.toInt()
         : null;
 
-    // 🔹 Corrige affichage de la destination : utilise le nom si ID est sélectionné
     final currentDestination = provider is HotelProvider
         ? (provider.selectedDestination ??
-        destinations.firstWhereOrNull((d) => d.id == provider.selectedDestinationId)?.name)
+        destinations
+            .firstWhereOrNull(
+                (d) => d.id == provider.selectedDestinationId)
+            ?.name)
         : provider is GuestHouseProvider
         ? provider.selectedDestination
         : provider is RestaurantProvider
@@ -124,15 +130,19 @@ class FilterSection extends StatelessWidget {
 
     final VoidCallback? clearFilters = filters['clear'] as VoidCallback?;
 
-    // Label dynamique
     final String primaryLabel = isHotel
-        ? (currentStarsOrForks != null ? "$currentStarsOrForks Étoile${currentStarsOrForks > 1 ? 's' : ''}" : "Étoiles")
+        ? (currentStarsOrForks != null
+        ? "$currentStarsOrForks ${currentStarsOrForks > 1 ? 'filters.stars'.tr() : 'filters.star'.tr()}"
+        : 'filters.stars'.tr())
         : (isRestaurant
-        ? (currentStarsOrForks != null ? "$currentStarsOrForks Fourchette${currentStarsOrForks > 1 ? 's' : ''}" : "Fourchette")
-        : "Filtre");
+        ? (currentStarsOrForks != null
+        ? "$currentStarsOrForks ${currentStarsOrForks > 1 ? 'filters.forks'.tr() : 'filters.fork'.tr()}"
+        : 'filters.forks'.tr())
+        : 'filters.filter'.tr());
 
-    final IconData primaryDropdownIcon =
-    isHotel ? Icons.star_border : (isRestaurant ? Icons.restaurant_menu : Icons.filter_list);
+    final IconData primaryDropdownIcon = isHotel
+        ? Icons.star_border
+        : (isRestaurant ? Icons.restaurant_menu : Icons.filter_list);
     final IconData visualRatingIcon =
     isHotel ? Icons.star : (isRestaurant ? Icons.restaurant_menu : Icons.filter_list);
 
@@ -169,10 +179,10 @@ class FilterSection extends StatelessWidget {
         // Destination Filter
         CustomFilterDropdown(
           theme: theme,
-          label: currentDestination ?? "Destination",
+          label: currentDestination ?? 'filters.destination'.tr(),
           icon: Icons.location_on_outlined,
           options: destinations
-              .map((d) => Text(d.name, style: TextStyle(color: theme.text)))
+              .map((d) => Text(d.getName(context.locale), style: TextStyle(color: theme.text)))
               .toList(),
           onSelectedIndex: (index) {
             final selected = destinations[index].name;
@@ -181,7 +191,8 @@ class FilterSection extends StatelessWidget {
         ),
         const SizedBox(width: 15),
         // Clear Filters
-        if (clearFilters != null && (currentStarsOrForks != null || currentDestination != null))
+        if (clearFilters != null &&
+            (currentStarsOrForks != null || currentDestination != null))
           GestureDetector(
             onTap: clearFilters,
             child: Container(

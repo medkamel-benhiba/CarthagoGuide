@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -97,7 +98,7 @@ class _TunisiaHistoryTimelineState extends State<TunisiaHistoryTimeline> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
-            "Chroniques de la Tunisie",
+            "cultures.tunisia_chronicles".tr(),
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -193,7 +194,6 @@ class _TunisiaHistoryTimelineState extends State<TunisiaHistoryTimeline> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image avec fade
                 ClipRRect(
                   borderRadius: BorderRadius.circular(15),
                   child: Image.asset(

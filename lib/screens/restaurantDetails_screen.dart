@@ -1,8 +1,10 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/restaurant.dart';
+import 'package:CarthagoGuide/utils/open_googlemaps.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -81,14 +83,12 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
       backgroundColor: theme.background,
       body: Stack(
         children: [
-          // Hero Media Section (Video or Image)
           Container(
             height: size.height * 0.45,
             color: Colors.black,
             child: _buildMediaHeader(size),
           ),
 
-          // Back Button
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(10.0),
@@ -135,20 +135,47 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    // Location
                     Row(
                       children: [
                         Icon(Icons.location_on_outlined, color: theme.primary, size: 20),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            widget.restaurant.destinationName ?? "Localisation non disponible",
+                            widget.restaurant.getDestinationName(context.locale),
                             style: TextStyle(
                               color: theme.text.withOpacity(0.7),
                               fontSize: 15,
                             ),
                           ),
                         ),
+
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Location
+                    Row(
+                      children: [
+                        Icon(Icons.map_outlined, color: theme.primary, size: 20),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            widget.restaurant.getAddress(context.locale) ?? 'details.location_unavailable'.tr(),
+                            style: TextStyle(
+                              color: theme.text.withOpacity(0.7),
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                        if (widget.restaurant.lat != null && widget.restaurant.lng != null)
+                          IconButton(
+                            icon: Icon(Icons.map, color: theme.primary),
+                            onPressed: () {
+                              double? lng = double.tryParse(widget.restaurant.lng.toString());
+                              double? lat = double.tryParse(widget.restaurant.lat.toString());
+                              openMap(context, lng, lat);
+                            },
+                          ),
                       ],
                     ),
 
@@ -156,7 +183,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
                     // Cuisine Features
                     Text(
-                      "Caractéristiques",
+                      'details.features'.tr(),
                       style: TextStyle(
                         color: theme.text,
                         fontSize: 20,
@@ -165,13 +192,13 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _FeatureItem(icon: FontAwesomeIcons.utensils, label: "Cuisine"),
-                        _FeatureItem(icon: Icons.delivery_dining, label: "Livraison"),
-                        _FeatureItem(icon: Icons.outdoor_grill, label: "Terrasse"),
-                        _FeatureItem(icon: FontAwesomeIcons.wineGlass, label: "Bar"),
+                        _FeatureItem(icon: FontAwesomeIcons.utensils, label: 'details.cuisine'.tr()),
+                        _FeatureItem(icon: Icons.delivery_dining, label: 'details.delivery'.tr()),
+                        _FeatureItem(icon: Icons.outdoor_grill, label: 'details.terrace'.tr()),
+                        _FeatureItem(icon: FontAwesomeIcons.wineGlass, label: 'details.bar'.tr()),
                       ],
                     ),
 
@@ -181,7 +208,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     if (widget.restaurant.openingHours != null &&
                         widget.restaurant.openingHours!.isNotEmpty) ...[
                       Text(
-                        "Horaires d'ouverture",
+                        'details.opening_hours'.tr(),
                         style: TextStyle(
                           color: theme.text,
                           fontSize: 20,
@@ -197,10 +224,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     ],
 
                     // Description
-                    if (widget.restaurant.crtDescription != null &&
-                        widget.restaurant.crtDescription!.isNotEmpty) ...[
+                    if (widget.restaurant.getDescription(context.locale) != null &&
+                        widget.restaurant.getDescription(context.locale)!.isNotEmpty) ...[
                       Text(
-                        "À propos",
+                        'details.about'.tr(),
                         style: TextStyle(
                           color: theme.text,
                           fontSize: 20,
@@ -209,7 +236,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        widget.restaurant.crtDescription!,
+                        widget.restaurant.getDescription(context.locale)!,
                         style: TextStyle(
                           color: theme.text.withOpacity(0.8),
                           fontSize: 15,
@@ -399,7 +426,7 @@ class _GallerySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Galerie Photos",
+          'details.gallery'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,
@@ -455,7 +482,7 @@ class _ContactSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Contact",
+          'details.contact'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,
@@ -487,7 +514,7 @@ class _ContactSection extends StatelessWidget {
           _ContactDetailRow(
             theme: theme,
             icon: Icons.location_on_outlined,
-            text: restaurant.address!,
+            text: restaurant.getAddress(context.locale)!,
             isLink: false,
           ),
 

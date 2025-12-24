@@ -19,6 +19,7 @@ import 'package:CarthagoGuide/widgets/video_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:CarthagoGuide/providers/destination_provider.dart';
 import 'package:CarthagoGuide/providers/event_provider.dart';
 import 'package:CarthagoGuide/providers/voyage_provider.dart';
@@ -86,6 +87,7 @@ final List<String> galleryImages = [
   "assets/images/sousse.jpg",
 ];
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -97,30 +99,25 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchInitialData();
-  }
-
-  void _fetchInitialData() {
     Future.microtask(() {
-      Provider.of<EventProvider>(context, listen: false).fetchEvents();
-      Provider.of<VoyageProvider>(context, listen: false).fetchVoyages();
+      context.read<EventProvider>().fetchEvents();
+      context.read<VoyageProvider>().fetchVoyages();
+      context.read<DestinationProvider>().fetchDestinations();
     });
   }
 
   void _toggleDrawer() {
-    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
+    final containerState =
+    context.findAncestorStateOfType<MainScreenContainerState>();
     containerState?.toggleDrawer();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Provider.of<ThemeProvider>(context).currentTheme;
-    final destinationProvider = Provider.of<DestinationProvider>(context);
-    final destinations = destinationProvider.destinations;
-    final eventProvider = Provider.of<EventProvider>(context);
-    final events = eventProvider.events;
-    final voyageProvider = Provider.of<VoyageProvider>(context);
-    final voyages = voyageProvider.voyages;
+    final theme = context.watch<ThemeProvider>().currentTheme;
+    final destinationProvider = context.watch<DestinationProvider>();
+    final eventProvider = context.watch<EventProvider>();
+    final voyageProvider = context.watch<VoyageProvider>();
     final locale = Localizations.localeOf(context);
 
     return Scaffold(
@@ -128,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
+          /// APP BAR
           SliverAppBar(
             backgroundColor: theme.background,
             elevation: 0,
@@ -154,14 +152,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
+          /// CONTENT
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(18.0),
+              padding: const EdgeInsets.all(15),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SearchBarWidget(theme: theme),
                   const SizedBox(height: 20),
+
                   ExperiencesReelSection(
                     theme: theme,
                     experiencesReels: experiencesReels,
@@ -170,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   VideoBanner(theme: theme),
                   const SizedBox(height: 20),
+
                   CategoryRowWidget(
                     theme: theme,
                     onDestinationsTap: () => context.go('/destinations'),
@@ -180,41 +181,53 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  /// ================= DESTINATIONS =================
                   SectionTitleWidget(
-                    title: "Destinations",
+                    title: "home.sections.destinations".tr(),
                     theme: theme,
                     showMore: true,
                     onTap: () => context.go('/destinations'),
                   ),
                   const SizedBox(height: 10),
 
-                  // Destinations Section
                   if (destinationProvider.isLoading)
                     HorizontalListView(
                       height: 200,
                       itemCount: 1,
-                      itemBuilder: (context, index) {
-                        return DestinationCardSkeleton(theme: theme);
-                      },
-                    )
-                  else if (!destinationProvider.isLoading &&
-                      destinations.isNotEmpty)
+                      itemBuilder: (_, __) =>
+                          DestinationCardSkeleton(theme: theme),
+                    ),
+
+                  if (!destinationProvider.isLoading &&
+                      destinationProvider.error == null &&
+                      destinationProvider.destinations.isNotEmpty)
                     NearbyDestinationSection(
-                      destinations: destinations.take(10).toList(),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10.0),
-                      child: Text(
-                        "Aucune destination disponible pour le moment.",
-                        style: TextStyle(color: theme.text.withOpacity(0.6)),
+                      destinations:
+                      destinationProvider.destinations.take(10).toList(),
+                    ),
+
+                  if (!destinationProvider.isLoading &&
+                      (destinationProvider.error != null ||
+                          destinationProvider.destinations.isEmpty))
+                    SizedBox(
+                      height: 210,
+                      child: Center(
+                        child: DataFetchStatusWidget(
+                          theme: theme,
+                          errorMessage: destinationProvider.error,
+                          isLoading: destinationProvider.isLoading,
+                          itemCount: destinationProvider.destinations.length,
+                          onRetry: destinationProvider.fetchDestinations,
+                          emptyMessage: "common.check_connection".tr(),
+                        ),
                       ),
                     ),
 
                   const SizedBox(height: 20),
 
+                  /// ================= CIRCUITS =================
                   SectionTitleWidget(
-                    title: "Circuits",
+                    title: "home.sections.circuits".tr(),
                     theme: theme,
                     showMore: true,
                     onTap: () => context.go('/circuits'),
@@ -225,27 +238,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     HorizontalListView(
                       height: 180,
                       itemCount: 3,
-                      itemBuilder: (context, index) {
-                        return CircuitCardSkeleton(theme: theme);
-                      },
+                      itemBuilder: (_, __) =>
+                          CircuitCardSkeleton(theme: theme),
                     ),
 
                   if (!voyageProvider.isLoading &&
                       voyageProvider.error == null &&
-                      voyages.isNotEmpty)
+                      voyageProvider.voyages.isNotEmpty)
                     HorizontalListView(
-                      height: 180,
-                      itemCount: voyages.length < 6 ? voyages.length : 6,
+                      height: 190,
+                      itemCount: voyageProvider.voyages.length > 6
+                          ? 6
+                          : voyageProvider.voyages.length,
                       itemBuilder: (context, index) {
-                        final voyage = voyages[index];
+                        final voyage = voyageProvider.voyages[index];
                         final circuit = voyageToCircuitCardData(voyage, locale);
                         return GestureDetector(
-                          onTap: () {
-                            context.push(
-                              '/circuit-details/${voyage.id}',
-                              extra: {'circuit': voyage},
-                            );
-                          },
+                          onTap: () => context.push(
+                            '/circuit-details/${voyage.id}',
+                            extra: {'circuit': voyage},
+                          ),
                           child: CircuitCardWidget(
                             theme: theme,
                             title: circuit["title"]!,
@@ -256,67 +268,76 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
 
-                  DataFetchStatusWidget(
-                    theme: theme,
-                    errorMessage: voyageProvider.error,
-                    isLoading: voyageProvider.isLoading,
-                    itemCount: voyages.length,
-                    onRetry: () => Provider.of<VoyageProvider>(
-                      context,
-                      listen: false,
-                    ).fetchVoyages(),
-                    emptyMessage: "Aucun circuit disponible pour le moment.",
-                  ),
+                  if (!voyageProvider.isLoading &&
+                      (voyageProvider.error != null ||
+                          voyageProvider.voyages.isEmpty))
+                    SizedBox(
+                      height: 210,
+                      child: Center(
+                        child: DataFetchStatusWidget(
+                          theme: theme,
+                          errorMessage: voyageProvider.error,
+                          isLoading: voyageProvider.isLoading,
+                          itemCount: voyageProvider.voyages.length,
+                          onRetry: voyageProvider.fetchVoyages,
+                          emptyMessage: "common.check_connection".tr(),
+                        ),
+                      ),
+                    ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
 
+                  /// ================= EVENTS =================
                   SectionTitleWidget(
-                    title: "Événements",
+                    title: "home.sections.events".tr(),
                     theme: theme,
                     showMore: true,
                     onTap: () => context.go('/events'),
                   ),
                   const SizedBox(height: 10),
 
-                  // Events Section
-                  if (eventProvider.isLoading)
-                    HorizontalListView(
-                      height: 250,
-                      itemCount: 3,
-                      itemBuilder: (context, index) {
-                        return EventCardSkeleton(theme: theme);
-                      },
-                    ),
-
                   if (!eventProvider.isLoading &&
                       eventProvider.errorMessage == null &&
-                      events.isNotEmpty)
+                      eventProvider.events.isNotEmpty)
                     HorizontalListView(
                       height: 240,
-                      itemCount: events.length < 6 ? events.length : 6,
-                      itemBuilder: (context, index) {
-                        final event = events[index];
-                        return EventCardWidget(
-                          theme: theme,
-                          title: event.title ?? "Événement sans titre",
-                          location: event.address ?? "Lieu non spécifié",
-                          date: event.startDate ?? "Date non spécifiée",
-                          imgUrl: event.cover ?? event.image ?? "",
+                      itemCount: eventProvider.events.length > 6
+                          ? 6
+                          : eventProvider.events.length,
+                      itemBuilder: (_, index) {
+                        final event = eventProvider.events[index];
+                        return GestureDetector(
+                          onTap: () => context.push(
+                            '/event-details/${event.id}',
+                            extra: {'event': event},
+                          ),
+                          child: EventCardWidget(
+                            theme: theme,
+                            title: event.getName(locale) ?? "events.no_title".tr(),
+                            location: event.getAddress(locale) ?? "events.no_location".tr(),
+                            date: event.startDate ?? "events.no_date".tr(),
+                            imgUrl: event.cover ?? event.image ?? "",
+                          ),
                         );
                       },
                     ),
 
-                  DataFetchStatusWidget(
-                    theme: theme,
-                    errorMessage: eventProvider.errorMessage,
-                    isLoading: eventProvider.isLoading,
-                    itemCount: events.length,
-                    onRetry: () => Provider.of<EventProvider>(
-                      context,
-                      listen: false,
-                    ).fetchEvents(),
-                    emptyMessage: "Aucun événement disponible pour le moment.",
-                  ),
+                  if (!eventProvider.isLoading &&
+                      (eventProvider.errorMessage != null ||
+                          eventProvider.events.isEmpty))
+                    SizedBox(
+                      height: 240,
+                      child: Center(
+                        child: DataFetchStatusWidget(
+                          theme: theme,
+                          errorMessage: eventProvider.errorMessage,
+                          isLoading: eventProvider.isLoading,
+                          itemCount: eventProvider.events.length,
+                          onRetry: eventProvider.fetchEvents,
+                          emptyMessage: "common.check_connection".tr(),
+                        ),
+                      ),
+                    ),
 
                   const SizedBox(height: 20),
 

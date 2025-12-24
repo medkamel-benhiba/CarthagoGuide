@@ -9,6 +9,12 @@ class Restaurant {
   final String? address;
   final String? destinationId;
   final String? destinationName;
+  final String? destinationNameEn;
+  final String? destinationNameRu;
+  final String? destinationNameZh;
+  final String? destinationNameKo;
+  final String? destinationNameJa;
+  final String? destinationNameAr;
   final String? cityId;
   final String? ville;
   final String? villeAr;
@@ -67,6 +73,12 @@ class Restaurant {
     this.address,
     this.destinationId,
     this.destinationName,
+    this.destinationNameAr,
+    this.destinationNameEn,
+    this.destinationNameRu,
+    this.destinationNameZh,
+    this.destinationNameKo,
+    this.destinationNameJa,
     this.cityId,
     this.ville,
     this.cover,
@@ -114,7 +126,6 @@ class Restaurant {
 
 
 
-
   final String? addressZh;
 
   factory Restaurant.fromJson(Map<String, dynamic> json) {
@@ -140,35 +151,58 @@ class Restaurant {
       imageList = List<String>.from(json['images'].map((img) => img.toString()));
     }
 
+    String? destNameEn;
+    String? destNameRu;
+    String? destNameJa;
+    String? destNameKo;
+    String? destNameZh;
+
     String? destName;
     if (json['destination'] is Map && json['destination']['name'] != null) {
       destName = json['destination']['name'] as String?;
     }
+    String? destNameAr;
+    if (json['destination'] is Map && json['destination']['name_ar'] != null) {
+      destNameAr = json['destination']['name_ar'] as String?;
+    }
+
 
     return Restaurant(
-      id: json['id'] as String? ?? '', // ID should ideally always be present
+      id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? 'Unnamed Restaurant',
       slug: json['slug'] as String?,
       crtDescription: json['crt_description'] as String?,
       address: json['address'] as String?,
       destinationId: json['destination_id'] as String?,
       destinationName: destName,
+      destinationNameAr: destNameAr,
+      destinationNameEn: destNameEn,
+      destinationNameRu: destNameRu,
+      destinationNameKo: destNameKo,
+      destinationNameJa: destNameJa,
+      destinationNameZh: destNameZh,
       cityId: json['city_id'] as String?,
       ville: json['ville'] as String?,
+      villeAr: json['ville_ar'] as String?,
+      villeEn: json['ville_en'] as String?,
+      villeRu: json['ville_ru'] as String?,
+      villeJa: json['ville_ja'] as String?,
+      villeZh: json['ville_zh'] as String?,
+      villeKo: json['ville_ko'] as String?,
       cover: json['cover'] as String?,
       vignette: json['vignette'] as String?,
       images: imageList,
       lat: json['lat'] ?? '',
       lng: json['lng'] ?? '',
-      rate: json['rate'], // Keep as dynamic or parse to double/int as needed
-      startingPrice: json['starting_price'], // Keep as dynamic or parse
+      rate: json['rate'],
+      startingPrice: json['starting_price'],
       openingHours: oh,
       phone: json['phone'] as String?,
       email: json['email'] as String?,
       website: json['website'] as String?,
       videoLink: json['video_link'] as String?,
       isSpecial: (json['is_special'] == 'yes' || json['is_special'] == true),
-      reservable: (json['reservable'] == 'yes' || json['reservable'] == true), // Assuming 'yes' or boolean
+      reservable: (json['reservable'] == 'yes' || json['reservable'] == true),
       status: json['status'] as String?,
       nameEn: json['name_en'] as String?,
       crtDescriptionEn: json['crt_description_en'] as String?,
@@ -263,6 +297,25 @@ class Restaurant {
 
       default:
         return crtDescription ?? '';
+    }
+  }
+
+  String getDestinationName(Locale locale) {
+    switch (locale.languageCode) {
+      case 'ar':
+        return (destinationNameAr != null && destinationNameAr!.isNotEmpty) ? destinationNameAr! : '';
+      case 'en':
+        return (destinationNameEn != null && destinationNameEn!.isNotEmpty) ? destinationNameEn! : '';
+      case 'ru':
+        return (destinationNameRu != null && destinationNameRu!.isNotEmpty) ? destinationNameRu! : '';
+      case 'zh':
+        return (destinationNameZh != null && destinationNameZh!.isNotEmpty) ? destinationNameZh! : '';
+      case 'ko':
+        return (destinationNameKo != null && destinationNameKo!.isNotEmpty) ? destinationNameKo! : '';
+      case 'ja':
+        return (destinationNameJa != null && destinationNameJa!.isNotEmpty) ? destinationNameJa! : '';
+      default:
+        return destinationName ?? '';
     }
   }
 

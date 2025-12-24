@@ -15,10 +15,11 @@ import '../models/hotel.dart';
 import '../models/monument.dart';
 import '../models/musee.dart';
 import '../models/restaurant.dart';
+import 'dart:developer' as developer;
 
 
 class ApiService {
-  static const String _baseUrl = 'https://7test.tunisiagotravel.com';
+  static const String _baseUrl = 'https://testguide.tunisiagotravel.com';
   final String _cachevoy = 'cached_voyages';
 
   Future<List<Destination>> getDestinations() async {
@@ -49,33 +50,28 @@ class ApiService {
 
   }
 
-
-Future<List<Hotel>> gethotels() async {
+  Future<List<Hotel>> gethotels({int page = 1}) async {
     try {
-      final response =
-      await http.get(Uri.parse('$_baseUrl/utilisateur/allhotels'));
+      final response = await http.get(
+        Uri.parse('$_baseUrl/utilisateur/hotels?page=$page'),
+      );
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
 
-        if (jsonData == null || jsonData['hotels'] == null) {
-          throw Exception("API returned null data");
-        }
+        final List<dynamic>? hotelList = jsonData['hotels']?['data'];
 
-        if (jsonData['hotels'] is List) {
-          return (jsonData['hotels'] as List)
-              .map((hotel) => Hotel.fromJson(hotel))
-              .toList();
+        if (hotelList != null) {
+          return hotelList.map((item) => Hotel.fromJson(item)).toList();
         } else {
-          throw Exception("Unexpected data format: ${jsonData['hotels']}");
+          throw Exception("Key 'data' not found in response");
         }
       } else {
-        throw Exception("Failed to fetch hotels: ${response.statusCode}");
+        throw Exception("Failed to load hotels.");
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       print("Error in gethotels: $e");
-      print("StackTrace: $stackTrace");
-      return [];
+      rethrow;
     }
   }
 
@@ -109,35 +105,57 @@ Future<List<Hotel>> gethotels() async {
     }
   }
 
-  Future<List<Restaurant>> getAllRestaurants() async {
+  Future<List<Restaurant>> getRestaurants({int page = 1}) async {
     try {
-      final response =
-      await http.get(Uri.parse('$_baseUrl/utilisateur/allrestaurants'));
+      final response = await http.get(
+        Uri.parse('$_baseUrl/utilisateur/restaurants?page=$page'),
+      );
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
 
-        if (jsonData == null || jsonData['restaurants'] == null) {
-          throw Exception("API returned null data");
-        }
+        final List<dynamic>? restaurantsList = jsonData['restaurants']?['data'];
 
-        if (jsonData['restaurants'] is List) {
-          return (jsonData['restaurants'] as List)
-              .map((r) => Restaurant.fromJson(r))
-              .toList();
+        if (restaurantsList != null) {
+          return restaurantsList.map((item) => Restaurant.fromJson(item)).toList();
         } else {
-          throw Exception("Unexpected data format: ${jsonData['restaurants']}");
+          throw Exception("Key 'data' not found in response");
         }
       } else {
-        throw Exception("Failed to fetch restaurants: ${response.statusCode}");
+        throw Exception("Failed to load restaurants.");
       }
-    } catch (e, stackTrace) {
-      print("Error in getAllRestaurants: $e");
-      print("StackTrace: $stackTrace");
-      return []; // Return empty list on failure
+    } catch (e) {
+      print("Error in gethotels: $e");
+      rethrow;
     }
   }
 
+  Future<List<GuestHouse>> getGuestHouses({int page = 1}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/utilisateur/maison?page=$page'),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+
+        final List<dynamic>? guestHousesList = jsonData['maisons']?['data'];
+
+        if (guestHousesList != null) {
+          return guestHousesList.map((item) => GuestHouse.fromJson(item)).toList();
+        } else {
+          throw Exception("Key 'data' not found in response");
+        }
+      } else {
+        throw Exception("Failed to load GuestHouses: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error in getGuestHouse: $e");
+      rethrow;
+    }
+  }
+
+  /*
   Future<List<GuestHouse>> getmaisons() async {
     try {
       final response =
@@ -163,9 +181,9 @@ Future<List<Hotel>> gethotels() async {
     } catch (e, stackTrace) {
       print("Error in getMaison: $e");
       print("StackTrace: $stackTrace");
-      return []; // Return empty list on failure
+      return [];
     }
-  }
+  }*/
 
   Future<List<Activity>> getallactivities() async {
     try {

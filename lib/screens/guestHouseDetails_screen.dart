@@ -1,11 +1,15 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/guestHouse.dart';
+import 'package:CarthagoGuide/utils/open_googlemaps.dart';
 import 'package:CarthagoGuide/widgets/contact_section.dart';
+import 'package:CarthagoGuide/widgets/hotels/gallery_section_details.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 
 class GuestHouseDetailsScreen extends StatefulWidget {
   final GuestHouse guestHouse;
@@ -21,6 +25,33 @@ class GuestHouseDetailsScreen extends StatefulWidget {
 
 class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
   int _selectedImageIndex = 0;
+  bool _showVideo = true;
+  bool _isLoading = true;
+  bool _isVideoInitializing = false;
+  PageController? _imagePageController;
+  int _currentImageIndex = 0;
+  VideoPlayerController? _videoController;
+
+
+
+  void _onGalleryImageTap(int imageIndex, List<String> images) {
+    setState(() {
+      _showVideo = false;
+      _currentImageIndex = imageIndex;
+
+      if (_videoController?.value.isInitialized == true &&
+          _videoController!.value.isPlaying) {
+        _videoController?.pause();
+      }
+
+      // Initialize PageController if needed
+      if (_imagePageController == null) {
+        _imagePageController = PageController(initialPage: imageIndex);
+      } else {
+        _imagePageController!.jumpToPage(imageIndex);
+      }
+    });
+  }
 
   Future<void> _launchUrl(String url) async {
     final Uri uri = Uri.parse(url);
@@ -47,7 +78,7 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     final size = MediaQuery.of(context).size;
-    final rating = double.tryParse(widget.guestHouse.noteGoogle) ?? 0.0;
+    final images = widget.guestHouse.images ?? [];
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -83,7 +114,7 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                 ),
                 // Image Counter
                 Positioned(
-                  bottom: 20,
+                  bottom: 60,
                   right: 20,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -91,13 +122,25 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                       color: Colors.black.withOpacity(0.6),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      '${_selectedImageIndex + 1}/${widget.guestHouse.images.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.photo_library_outlined,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "${_currentImageIndex + 1} / ${images.length}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -143,7 +186,7 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            widget.guestHouse.name,
+                            widget.guestHouse.getName(context.locale),
                             style: TextStyle(
                               color: theme.text,
                               fontSize: 26,
@@ -163,13 +206,14 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            widget.guestHouse.destination.name,
+                            widget.guestHouse.getVille(context.locale),
                             style: TextStyle(
                               color: theme.text.withOpacity(0.7),
                               fontSize: 15,
                             ),
                           ),
                         ),
+
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -182,21 +226,37 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            widget.guestHouse.address,
+                            widget.guestHouse.getAddress(context.locale),
                             style: TextStyle(
                               color: theme.text.withOpacity(0.6),
                               fontSize: 14,
                             ),
                           ),
                         ),
+                        if (widget.guestHouse.lat != null && widget.guestHouse.lng != null)
+                          IconButton(
+                            icon: Icon(Icons.map, color: theme.primary),
+                            onPressed: () {
+                              double? lng = double.tryParse(widget.guestHouse.lng.toString());
+                              double? lat = double.tryParse(widget.guestHouse.lat.toString());
+                              openMap(context, lng, lat);
+                            },
+                          ),
                       ],
                     ),
 
                     const SizedBox(height: 30),
 
+                    GallerySection(
+                      theme: theme,
+                      galleryImages: images,
+                      onImageTap: (index) => _onGalleryImageTap(index, images),
+                    ),
+                    const SizedBox(height: 30),
+
                     // Amenities Section
                     Text(
-                      "Équipements",
+                      'details.amenities'.tr(),
                       style: TextStyle(
                         color: theme.text,
                         fontSize: 20,
@@ -205,13 +265,13 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _AmenityItem(icon: Icons.wifi, label: "WiFi"),
-                        _AmenityItem(icon: Icons.restaurant_outlined, label: "Petit-déj"),
-                        _AmenityItem(icon: FontAwesomeIcons.snowflake, label: "Climatisation"),
-                        _AmenityItem(icon: Icons.local_parking_outlined, label: "Parking"),
+                        _AmenityItem(icon: Icons.wifi, label: 'details.wifi'.tr()),
+                        _AmenityItem(icon: Icons.restaurant_outlined, label: 'details.breakfast'.tr()),
+                        _AmenityItem(icon: FontAwesomeIcons.snowflake, label: 'details.ac'.tr()),
+                        _AmenityItem(icon: Icons.local_parking_outlined, label: 'details.parking'.tr()),
                       ],
                     ),
 
@@ -220,7 +280,7 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                     // Description
                     if (widget.guestHouse.description.isNotEmpty) ...[
                       Text(
-                        "À propos",
+                        'details.about'.tr(),
                         style: TextStyle(
                           color: theme.text,
                           fontSize: 20,
@@ -229,7 +289,7 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        widget.guestHouse.description,
+                        widget.guestHouse.getDescription(context.locale),
                         style: TextStyle(
                           color: theme.text.withOpacity(0.8),
                           fontSize: 15,
@@ -319,7 +379,7 @@ class _ContactSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Contact",
+          'details.contact'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,
@@ -350,7 +410,7 @@ class _ContactSection extends StatelessWidget {
         ContactDetailRow(
           theme: theme,
           icon: Icons.location_on_outlined,
-          text: guestHouse.address,
+          text: guestHouse.getAddress(context.locale),
           isLink: false,
         ),
       ],

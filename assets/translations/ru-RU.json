@@ -1,0 +1,180 @@
+{
+  "app_name": "CarthagoGuide",
+  "home": {
+    "search_placeholder": "Поиск направлений, отелей...",
+    "categories": {
+      "destinations": "Направления",
+      "hotels": "Отели",
+      "restaurants": "Рестораны",
+      "circuits": "Туры",
+      "chatbot": "Чат-бот"
+    },
+    "sections": {
+      "destinations": "Направления",
+      "circuits": "Туры",
+      "events": "События",
+      "gallery": "Галерея",
+      "moments": "Моменты"
+    },
+    "experiences": {
+      "adventure": "Приключения",
+      "kairouan_vibes": "Атмосфера Кайруана",
+      "local_food": "Местная кухня",
+      "desert_trip": "Путешествие в пустыню",
+      "beach_day": "День на пляже",
+      "museums": "Музеи"
+    }
+  },
+  "common": {
+    "see_more": "Подробнее",
+    "retry": "Повторить",
+    "loading": "Загрузка...",
+    "no_data": "Нет данных",
+    "error": "Ошибка",
+    "check_connection": "Проверьте интернет-соединение и попробуйте снова.",
+    "cancel": "Отмена",
+    "search_placeholder": "Поиск...",
+    "clear_filters": "Очистить фильтры"
+
+  },
+  "drawer": {
+    "settings": "Настройки",
+    "home": "Главная",
+    "destinations": "Направления",
+    "hotels": "Отели",
+    "guest_houses": "Гостевые дома",
+    "restaurants": "Рестораны",
+    "activities": "Активности",
+    "events": "События",
+    "cultures": "Культура",
+    "circuits": "Туры",
+    "sponsors": "Партнёры",
+    "choose_theme": "Выбрать тему",
+    "exit_title": "Выйти из приложения?",
+    "exit_message": "Вы уверены, что хотите выйти из Carthago Guide?",
+    "exit_confirm": "Да, выйти"
+  },
+  "language": "Язык",
+  "destinations": {
+    "title": "Направления",
+    "nearby": "Поблизости"
+  },
+  "circuits": {
+    "title": "Туры",
+    "days": "дней",
+    "duration": "Продолжительность",
+    "featured": "Рекомендуемые туры",
+    "all": "Все туры"
+  },
+  "events": {
+    "title": "События",
+    "no_title": "Без названия",
+    "no_location": "Место не указано",
+    "no_date": "Дата не указана"
+  },
+  "activities": {
+    "title": "Активности",
+    "retry": "Повторить",
+    "results": "Результаты ({count})",
+    "check_connection": "Проверьте интернет и попробуйте снова.",
+    "clear_search": "Очистить поиск",
+    "untitled": "Без названия"
+  },
+  "errors": {
+    "fetch_failed": "Ошибка загрузки данных",
+    "network_error": "Ошибка сети",
+    "empty_list": "Нет доступных элементов"
+  },
+  "hotels": {
+    "title": "Отели",
+    "unknown_destination": "Неизвестное направление",
+    "no_results": "Отели не найдены",
+    "try_different_search": "Попробуйте изменить параметры поиска или фильтры"
+
+  },
+  "restaurants": {
+    "title": "Рестораны",
+    "unknown": "Неизвестно"
+  },
+  "guest_houses": {
+    "title": "Гостевые дома"
+  },
+  "cultures": {
+    "title": "Культура",
+    "discover": "Откройте для себя культуру Туниса",
+    "monuments": "Памятники",
+    "museums": "Музеи",
+    "festival": "Фестиваль",
+    "festivals": "Фестивали",
+    "artisanat": "Ремесла",
+    "tunisia_chronicles": "Хроники Туниса"
+  },
+  "sponsors": {
+    "title": "Наши партнёры",
+    "thanks": "Спасибо нашим партнёрам",
+    "support_message": "Они доверяют нам и поддерживают нашу миссию",
+    "become_partner": "Хотите стать партнёром?",
+    "contact_us": "Свяжитесь с нами для подробностей"
+  },
+  "chatbot": {
+    "welcome": "Здравствуйте! Я ваш помощник Carthago Guide. Чем могу помочь вам открыть Тунис?",
+    "new_conversation": "Новый разговор",
+    "history": "История"
+  },
+  "details": {
+    "amenities": "Удобства",
+    "wifi": "Wi-Fi",
+    "spa": "Спа",
+    "restaurant": "Ресторан",
+    "pool": "Бассейн",
+    "description": "Описание",
+    "show_more": "Показать больше",
+    "show_less": "Показать меньше",
+    "gallery": "Фотогалерея",
+    "contact": "Контакт",
+    "features": "Характеристики",
+    "cuisine": "Кухня",
+    "delivery": "Доставка",
+    "terrace": "Терраса",
+    "bar": "Бар",
+    "opening_hours": "Часы работы",
+    "about": "О нас",
+    "location_unavailable": "Местоположение недоступно",
+    "destination_details": "Детали направления:",
+    "no_hotels": "Нет доступных отелей",
+    "no_restaurants": "Нет доступных ресторанов",
+    "about_circuit": "О туре",
+    "duration": "Продолжительность",
+    "price": "Цена",
+    "circuit_program": "Программа тура",
+    "day": "День",
+    "whats_included": "Что включено",
+    "accommodation_included": "Проживание включено",
+    "meals_included": "Питание включено",
+    "transport_organized": "Транспорт организован",
+    "professional_guide": "Профессиональный гид",
+    "free": "Бесплатно",
+    "date_unavailable": "Дата недоступна",
+    "breakfast": "Завтрак",
+    "ac": "Кондиционер",
+    "parking": "Парковка",
+    "entry_fee": "Входной билет",
+    "things_to_see": "Что посмотреть",
+    "observations": "Примечания"
+  },
+  "filters": {
+    "stars": "Звёзды",
+    "star": "Звезда",
+    "forks": "Вилки",
+    "fork": "Вилка",
+    "filter": "Фильтр",
+    "destination": "Направление"
+  },
+  "video": {
+    "featured": "Рекомендуемое",
+    "discover_tunisia": "Откройте Тунис"
+  },
+  "read_aloud": "Озвучивание",
+  "stop": "Остановить"
+
+}

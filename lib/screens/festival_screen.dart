@@ -2,7 +2,9 @@ import 'package:CarthagoGuide/screens/festivalDetails_screen.dart';
 import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:CarthagoGuide/widgets/cultures/festival_card.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/providers/festival_provider.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
@@ -18,10 +20,6 @@ class FestivalScreen extends StatefulWidget {
 }
 
 class _FestivalScreenState extends State<FestivalScreen> {
-  void _toggleDrawer() {
-    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
-    containerState?.toggleDrawer();
-  }
 
   @override
   void initState() {
@@ -89,11 +87,11 @@ class _FestivalScreenState extends State<FestivalScreen> {
         backgroundColor: theme.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.menu_rounded, color: theme.text),
-          onPressed: _toggleDrawer,
+          icon: Icon(Icons.arrow_back, color: theme.text),
+          onPressed: context.pop,
         ),
         title: Text(
-          "Festivals",
+          'cultures.festivals'.tr(),
           style: TextStyle(color: theme.primary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -139,7 +137,7 @@ class _FestivalScreenState extends State<FestivalScreen> {
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
-                                    "Aucun festival trouvé",
+                                    'common.check_connection'.tr(),
                                     style: TextStyle(
                                       color: theme.text.withOpacity(0.6),
                                       fontSize: 16,
@@ -150,7 +148,7 @@ class _FestivalScreenState extends State<FestivalScreen> {
                                     TextButton(
                                       onPressed: () => festivalProvider.clearSearch(locale),
                                       child: Text(
-                                        "Effacer la recherche",
+                                        'activities.clear_search'.tr(),
                                         style: TextStyle(color: theme.primary),
                                       ),
                                     ),
@@ -161,7 +159,7 @@ class _FestivalScreenState extends State<FestivalScreen> {
                           )
                         else ...[
                             Text(
-                              "Résultats (${festivalList.length})",
+                              'activities.results'.tr(namedArgs: {'count': festivalList.length.toString()}),
                               style: TextStyle(
                                 color: theme.text.withOpacity(0.6),
                                 fontWeight: FontWeight.w300,

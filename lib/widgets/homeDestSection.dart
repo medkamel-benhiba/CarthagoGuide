@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:CarthagoGuide/models/destination.dart';
 import 'package:CarthagoGuide/screens/destinationDetails_screen.dart';
 import 'package:CarthagoGuide/widgets/homeDestCard.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class NearbyDestinationSection extends StatefulWidget {
@@ -56,8 +57,8 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
       context,
       MaterialPageRoute(
         builder: (context) => DestinationDetailsScreen(
-          title: destination.name,
-          description: destination.descriptionMobile ?? "",
+          title: destination.getName(context.locale),
+          description: destination.getDescription(context.locale) ?? "",
           gallery: destination.gallery,
           destinationId: destination.id,
         ),

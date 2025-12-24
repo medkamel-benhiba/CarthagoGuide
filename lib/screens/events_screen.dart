@@ -7,6 +7,7 @@ import 'package:CarthagoGuide/widgets/hotels/filters/filter_section.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
@@ -43,7 +44,7 @@ class _EventsScreenState extends State<EventsScreen> {
           onPressed: _toggleDrawer,
         ),
         title: Text(
-          "Évènements",
+          'events.title'.tr(),
           style: TextStyle(color: theme.primary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -71,7 +72,7 @@ class _EventsScreenState extends State<EventsScreen> {
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => provider.fetchEvents(),
-                    child: Text('Réessayer', style: TextStyle(color: theme.primary)),
+                    child: Text('common.retry'.tr(), style: TextStyle(color: theme.primary)),
                   ),
                 ],
               ),
@@ -99,7 +100,7 @@ class _EventsScreenState extends State<EventsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Résultats (${events.length})",
+                        'activities.results'.tr(namedArgs: {'count': events.length.toString()}),
                         style: TextStyle(
                           color: theme.text.withOpacity(0.6),
                           fontWeight: FontWeight.w300,
@@ -124,7 +125,7 @@ class _EventsScreenState extends State<EventsScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              "Aucun événement trouvé",
+                              'common.check_connection'.tr(),
                               style: TextStyle(
                                 color: theme.text.withOpacity(0.6),
                                 fontSize: 16,
@@ -135,7 +136,7 @@ class _EventsScreenState extends State<EventsScreen> {
                               TextButton(
                                 onPressed: () => provider.clearSearch(),
                                 child: Text(
-                                  "Effacer la recherche",
+                                  'activities.clear_search'.tr(),
                                   style: TextStyle(color: theme.primary),
                                 ),
                               ),
@@ -158,8 +159,8 @@ class _EventsScreenState extends State<EventsScreen> {
                           padding: const EdgeInsets.only(bottom: 15),
                           child: EventCardWidget(
                             theme: theme,
-                            title: event.title,
-                            location: event.address ?? "Lieu non spécifié",
+                            title: event.getName(context.locale),
+                            location: event.getAddress(context.locale) ?? 'events.no_location'.tr(),
                             imgUrl: event.cover ?? "",
                             date: event.startDate ?? "",
                             onTap: () {

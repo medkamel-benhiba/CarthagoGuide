@@ -2,6 +2,7 @@ import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/event.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -36,18 +37,15 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     final size = MediaQuery.of(context).size;
+    final locale = Localizations.localeOf(context);
+
 
     /// COVER SELECTION
     final cover = widget.event.cover ??
         widget.event.image ??
         ""; // fallback empty
 
-    /// PRICE
-    final displayPrice = (widget.event.price == null ||
-        widget.event.price == "0" ||
-        widget.event.price == 0)
-        ? "Gratuit"
-        : "${widget.event.price} TND";
+
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -83,14 +81,14 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           ),
 
           // BOTTOM SHEET
-          _buildBottomSheet(theme, size, displayPrice),
+          _buildBottomSheet(theme, size),
         ],
       ),
     );
   }
 
   Widget _buildBottomSheet(
-      AppTheme theme, Size size, String displayPrice) {
+      AppTheme theme, Size size) {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
@@ -109,11 +107,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Event Title
-              _buildHeader(theme, displayPrice),
+              _buildHeader(theme),
               const SizedBox(height: 10),
 
               // Price Chip (Moved here to be closer to the title, like the rating in HotelDetailsScreen)
-              _buildPriceChip(theme, displayPrice),
               const SizedBox(height: 10),
 
               // Date and Time
@@ -136,9 +133,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
-  Widget _buildHeader(AppTheme theme, String displayPrice) {
+  Widget _buildHeader(AppTheme theme) {
     return Text(
-      widget.event.title,
+      widget.event.getName(context.locale),
       style: TextStyle(
         color: theme.text,
         fontSize: 28,
@@ -147,33 +144,16 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
-  Widget _buildPriceChip(AppTheme theme, String displayPrice) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: theme.primary.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        displayPrice,
-        style: TextStyle(
-          color: theme.primary,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
 
   Widget _buildDateTime(AppTheme theme) {
     return Row(
       children: [
-        Icon(Icons.event, color: theme.text, size: 18),
+        Icon(Icons.event, color: theme.primary, size: 18),
         const SizedBox(width: 5),
         Expanded(
           child: Text(
-            widget.event.startDate ?? "Date non disponible",
-            style: TextStyle(color: theme.text, fontSize: 16),
+            widget.event.startDate ?? 'details.date_unavailable'.tr(),
+            style: TextStyle(color: theme.text.withOpacity(0.7), fontSize: 16),
           ),
         ),
       ],
@@ -183,12 +163,12 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   Widget _buildLocation(AppTheme theme) {
     return Row(
       children: [
-        Icon(Icons.location_on, color: theme.text, size: 18),
+        Icon(Icons.location_on, color: theme.primary, size: 18),
         const SizedBox(width: 5),
         Expanded(
           child: Text(
-            widget.event.address ?? "Lieu non disponible",
-            style: TextStyle(color: theme.text, fontSize: 16),
+            widget.event.getAddress(context.locale) ?? 'details.location_unavailable'.tr(),
+            style: TextStyle(color: theme.text.withOpacity(0.7), fontSize: 16),
           ),
         ),
       ],
@@ -196,7 +176,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Widget _buildDescription(AppTheme theme) {
-    final fullText = _stripHtml(widget.event.description ?? "");
+    final fullText = _stripHtml(widget.event.getDescription(context.locale) ?? "");
     final truncatedText =
     fullText.length > 220 ? fullText.substring(0, 220) + "..." : fullText;
 
@@ -204,11 +184,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Description",
+          'details.description'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,
-            fontWeight: FontWeight.bold, // Same as hotel section titles
+            fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 10),
@@ -227,9 +207,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             onTap: () =>
                 setState(() => _isDescriptionExpanded = !_isDescriptionExpanded),
             child: Padding(
-              padding: const EdgeInsets.only(top: 5.0), // Spacing like hotel description
+              padding: const EdgeInsets.only(top: 5.0),
               child: Text(
-                _isDescriptionExpanded ? "Afficher moins" : "Afficher plus",
+                _isDescriptionExpanded ? 'details.show_less'.tr() : 'details.show_more'.tr(),
                 style: TextStyle(
                     color: theme.primary,
                     fontSize: 14,
@@ -242,7 +222,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 }
 
-// Re-used from HotelDetailsScreen
 class _DetailActionButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;

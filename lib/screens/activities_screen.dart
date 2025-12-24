@@ -4,8 +4,12 @@ import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:CarthagoGuide/widgets/activity_card.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
 import 'package:CarthagoGuide/providers/activity_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+// Transformations Imports
+import 'package:transformable_list_view/transformable_list_view.dart';
+import 'package:CarthagoGuide/utils/list_transformations.dart';
 
 class ActivitiesScreen extends StatefulWidget {
   const ActivitiesScreen({super.key});
@@ -15,8 +19,12 @@ class ActivitiesScreen extends StatefulWidget {
 }
 
 class _ActivitiesScreenState extends State<ActivitiesScreen> {
+  // Constant height to ensure transformation matrices calculate correctly
+  static const double activityCardHeight = 220;
+
   void _toggleDrawer() {
-    final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
+    final containerState =
+    context.findAncestorStateOfType<MainScreenContainerState>();
     containerState?.toggleDrawer();
   }
 
@@ -24,7 +32,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ActivityProvider>(context, listen: false).fetchAllActivities();
+      Provider.of<ActivityProvider>(
+        context,
+        listen: false,
+      ).fetchAllActivities();
     });
   }
 
@@ -42,45 +53,42 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
           onPressed: _toggleDrawer,
         ),
         title: Text(
-          "Activités",
+          "activities.title".tr(),
           style: TextStyle(color: theme.primary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
       body: Consumer<ActivityProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SkeletonContainer(
-                      height: 50,
-                      width: double.infinity,
-                      borderRadius: 12,
-                      theme: theme,
-                    ),
-                    const SizedBox(height: 25),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
+          // --- LOADING STATE ---
+          if (provider.isLoading && provider.activities.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonContainer(
+                    height: 50,
+                    width: double.infinity,
+                    borderRadius: 12,
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 25),
+                  Expanded(
+                    child: ListView.builder(
                       itemCount: 4,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: SkeletonActivityCard(theme: theme),
-                        );
-                      },
+                      itemBuilder: (context, index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: SkeletonActivityCard(theme: theme),
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           }
 
+          // --- ERROR STATE ---
           if (provider.errorMessage != null) {
             return Center(
               child: Column(
@@ -88,134 +96,122 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                 children: [
                   Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
                   const SizedBox(height: 10),
-                  Text(provider.errorMessage!, style: TextStyle(color: theme.text)),
+                  Text(
+                    provider.errorMessage!,
+                    style: TextStyle(color: theme.text),
+                  ),
                   TextButton(
                     onPressed: () => provider.forceRefresh(),
-                    child: const Text("Réessayer"),
-                  )
+                    child: Text("activities.retry".tr()),
+                  ),
                 ],
               ),
             );
           }
 
-          // ✅ FIXED: Just use provider.activities directly
           final activities = provider.activities;
 
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SearchBarWidget(
-                    theme: theme,
-                    onChanged: (query) {
-                      provider.setSearchQuery(query);
-                    },
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SearchBarWidget(
+                  theme: theme,
+                  onChanged: (query) => provider.setSearchQuery(query),
+                ),
+                const SizedBox(height: 25),
+                Text(
+                  "activities.results".tr(
+                    namedArgs: {'count': activities.length.toString()},
                   ),
-                  const SizedBox(height: 25),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Résultats (${activities.length})",
-                        style: TextStyle(
-                          color: theme.text.withOpacity(0.6),
-                          fontWeight: FontWeight.w300,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
+                  style: TextStyle(
+                    color: theme.text.withOpacity(0.6),
+                    fontWeight: FontWeight.w300,
+                    fontSize: 16,
                   ),
-                  const SizedBox(height: 15),
+                ),
+                const SizedBox(height: 15),
 
-                  // Show empty state if no results
-                  if (activities.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 50.0),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.search_off,
-                              size: 64,
-                              color: theme.text.withOpacity(0.3),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              "Aucune activité trouvée",
-                              style: TextStyle(
-                                color: theme.text.withOpacity(0.6),
-                                fontSize: 16,
-                              ),
-                            ),
-                            if (provider.searchQuery.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              TextButton(
-                                onPressed: () => provider.clearSearch(),
-                                child: Text(
-                                  "Effacer la recherche",
-                                  style: TextStyle(color: theme.primary),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
+                // --- LIST STATE ---
+                Expanded(
+                  child: activities.isEmpty
+                      ? _buildEmptyState(theme, provider)
+                      : TransformableListView.builder(
+                    getTransformMatrix:
+                    ListTransformations.getMonumentTransformMatrix,
+                    itemCount: activities.length,
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 40),
+                    itemBuilder: (context, index) {
+                      final activity = activities[index];
+                      final imageUrl = (activity.vignette?.isNotEmpty ??
+                          false)
+                          ? activity.vignette!
+                          : (activity.cover ?? "");
 
-                  // Activity list with staggered animation
-                  if (activities.isNotEmpty)
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: activities.length,
-                      itemBuilder: (context, index) {
-                        final activity = activities[index];
-                        final imageUrl = (activity.vignette != null && activity.vignette!.isNotEmpty)
-                            ? activity.vignette!
-                            : (activity.cover ?? "");
-
-                        return TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: 1.0),
-                          duration: Duration(milliseconds: 300 + (index * 50)),
-                          curve: Curves.easeOutQuart,
-                          builder: (context, value, child) {
-                            return Transform.translate(
-                              offset: Offset(0, 30 * (1 - value)),
-                              child: Opacity(
-                                opacity: value,
-                                child: child,
-                              ),
-                            );
-                          },
+                      return SizedBox(
+                        height: activityCardHeight,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 5),
                           child: ActivityCardWidget(
                             theme: theme,
-                            title: activity.title ?? "Sans titre",
+                            title: activity.getName(context.locale) ??
+                                'activities.untitled'.tr(),
                             destId: activity.destinationId ?? "Tunisie",
                             imgUrl: imageUrl,
-                            category: activity.subtype.toString(),
+                            category: activity.getSubtype(context.locale),
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ActivityDetailsScreen(activity: activity),
+                                  builder: (context) =>
+                                      ActivityDetailsScreen(
+                                          activity: activity),
                                 ),
                               );
                             },
                           ),
-                        );
-                      },
-                    ),
-
-                  const SizedBox(height: 40),
-                ],
-              ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(AppTheme theme, ActivityProvider provider) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 64,
+            color: theme.text.withOpacity(0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "activities.check_connection".tr(),
+            style: TextStyle(
+              color: theme.text.withOpacity(0.6),
+              fontSize: 16,
+            ),
+          ),
+          if (provider.searchQuery.isNotEmpty)
+            TextButton(
+              onPressed: () => provider.clearSearch(),
+              child: Text(
+                "activities.clear_search".tr(),
+                style: TextStyle(color: theme.primary),
+              ),
+            ),
+        ],
       ),
     );
   }

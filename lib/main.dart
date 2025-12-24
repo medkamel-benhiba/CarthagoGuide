@@ -13,36 +13,51 @@ import 'package:CarthagoGuide/providers/restaurant_provider.dart';
 import 'package:CarthagoGuide/providers/voyage_provider.dart';
 import 'package:CarthagoGuide/screens/splash_screen.dart';
 import 'package:CarthagoGuide/services/api_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(statusBarColor: Colors.transparent));
+    const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
+  );
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => DestinationProvider()),
-        ChangeNotifierProvider(create: (_) => HotelProvider()),
-        ChangeNotifierProvider(create: (_) => GuestHouseProvider()),
-        ChangeNotifierProvider(create: (_) => RestaurantProvider()),
-        ChangeNotifierProvider(create: (_) => ActivityProvider()),
-        ChangeNotifierProvider(create: (_) => EventProvider()),
-        ChangeNotifierProvider(create: (_) => VoyageProvider()),
-        ChangeNotifierProvider(create: (_) => MuseeProvider()),
-        ChangeNotifierProvider(create: (_) => MonumentProvider()),
-        ChangeNotifierProvider(create: (_) => FestivalProvider()),
-        ChangeNotifierProvider(create: (_) => ArtisanatProvider()),
-
+    EasyLocalization(
+      supportedLocales: const [
+        Locale('fr', 'FR'),
+        Locale('en', 'US'),
+        Locale('ar', 'TN'),
+        Locale('ru', 'RU'),
+        Locale('ja', 'JA'),
+        Locale('ko', 'KO'),
+        Locale('zh', 'CN'),
       ],
-      child: const MyApp(),
+      path: 'assets/translations',
+      startLocale: null,
+
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => DestinationProvider()),
+          ChangeNotifierProvider(create: (_) => HotelProvider()),
+          ChangeNotifierProvider(create: (_) => GuestHouseProvider()),
+          ChangeNotifierProvider(create: (_) => RestaurantProvider()),
+          ChangeNotifierProvider(create: (_) => ActivityProvider()),
+          ChangeNotifierProvider(create: (_) => EventProvider()),
+          ChangeNotifierProvider(create: (_) => VoyageProvider()),
+          ChangeNotifierProvider(create: (_) => MuseeProvider()),
+          ChangeNotifierProvider(create: (_) => MonumentProvider()),
+          ChangeNotifierProvider(create: (_) => FestivalProvider()),
+          ChangeNotifierProvider(create: (_) => ArtisanatProvider()),
+        ],
+        child: const MyApp(),
+      ),
     ),
   );
-
 }
 
 class MyApp extends StatelessWidget {
@@ -51,19 +66,24 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
+
     return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      title: 'Carthago Guide',
-      theme: ThemeData(
-        primaryColor: theme.primary,
-        scaffoldBackgroundColor: theme.background,
-        textTheme: GoogleFonts.poppinsTextTheme().apply(
-          bodyColor: theme.text,
-          displayColor: theme.text,
+        debugShowCheckedModeBanner: false,
+        locale: context.locale,
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        title: 'Carthago Guide',
+        theme: ThemeData(
+          primaryColor: theme.primary,
+          scaffoldBackgroundColor: theme.background,
+          textTheme: GoogleFonts.poppinsTextTheme().apply(
+            bodyColor: theme.text,
+            displayColor: theme.text,
+          ),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
-      ),
-      routerConfig: AppRouter.router,
-    );
+        routerConfig: AppRouter.router,
+      );
   }
 }
+

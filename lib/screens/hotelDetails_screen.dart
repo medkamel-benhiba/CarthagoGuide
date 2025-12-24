@@ -1,45 +1,112 @@
+import 'dart:async';
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/hotel.dart';
-import 'package:CarthagoGuide/widgets/contact_section.dart';
+import 'package:CarthagoGuide/providers/hotel_provider.dart';
+import 'package:CarthagoGuide/widgets/descriptionWithTTS.dart';
+import 'package:CarthagoGuide/widgets/hotels/contact_section.dart';
+import 'package:CarthagoGuide/widgets/hotels/detail_action_button.dart';
+import 'package:CarthagoGuide/widgets/hotels/facility_item.dart';
+import 'package:CarthagoGuide/widgets/hotels/gallery_section_details.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:video_player/video_player.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class HotelDetailsScreen extends StatefulWidget {
   final Hotel hotel;
 
-  const HotelDetailsScreen({
-    super.key,
-    required this.hotel,
-  });
+  const HotelDetailsScreen({super.key, required this.hotel});
 
   @override
   State<HotelDetailsScreen> createState() => _HotelDetailsScreenState();
 }
 
 class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
-  late VideoPlayerController _videoController;
-  bool _isDescriptionExpanded = false;
+  VideoPlayerController? _videoController;
+  final FlutterTts _flutterTts = FlutterTts();
+  bool _isSpeaking = false;
+  bool _showVideo = true;
+  bool _isLoading = true;
+  bool _isVideoInitializing = false;
+  PageController? _imagePageController;
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(widget.hotel.video_link))
-      ..initialize().then((_) {
-        setState(() {});
-        _videoController.play();
-        _videoController.setLooping(true);
-        _videoController.setVolume(0.0);
-      }).catchError((e) {
-        debugPrint("Error initializing network video: $e");
+    _loadHotelDetails();
+
+    _flutterTts.setCompletionHandler(() {
+      if (mounted) {
+        setState(() {
+          _isSpeaking = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _loadHotelDetails() async {
+    final hotelProvider = Provider.of<HotelProvider>(context, listen: false);
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    await hotelProvider.fetchHotelDetail(widget.hotel.slug);
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
       });
+
+      final hotelDetail = hotelProvider.selectedHotel;
+      final videoLink = hotelDetail?.videoLink;
+
+      if (videoLink != null && videoLink.isNotEmpty) {
+        _initializeVideo(videoLink);
+      }
+    }
+  }
+
+  void _initializeVideo(String videoUrl) {
+    if (_videoController != null) {
+      _videoController!.dispose();
+    }
+
+    setState(() {
+      _isVideoInitializing = true;
+    });
+
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+      ..initialize()
+          .then((_) {
+            if (mounted) {
+              setState(() {
+                _isVideoInitializing = false;
+              });
+              _videoController?.play();
+              _videoController?.setLooping(true);
+              _videoController?.setVolume(0.0);
+            }
+          })
+          .catchError((e) {
+            debugPrint("Error initializing network video: $e");
+            if (mounted) {
+              setState(() {
+                _isVideoInitializing = false;
+              });
+            }
+          });
   }
 
   @override
   void dispose() {
-    _videoController.dispose();
+    _videoController?.dispose();
+    _imagePageController?.dispose();
+    _flutterTts.stop();
     super.dispose();
   }
 
@@ -52,7 +119,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
         .replaceAll('\r\n', ' ')
         .replaceAll('\n', ' ')
         .replaceAll('\t', ' ')
-        .replaceAll(' ', ' ')
+        .replaceAll(' ', ' ')
         .replaceAll(RegExp(r' {2,}'), ' ')
         .trim();
     return plainText;
@@ -64,338 +131,441 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
         List.generate(5 - count, (_) => '☆').join();
   }
 
+  String _getTtsLanguageCode(String localeCode) {
+    switch (localeCode.toLowerCase()) {
+      case 'ar':
+        return 'ar-SA';
+      case 'en':
+        return 'en-US';
+      case 'fr':
+        return 'fr-FR';
+      case 'ru':
+        return 'ru-RU';
+      case 'ko':
+        return 'ko-KR';
+      case 'zh':
+        return 'zh-CN';
+      case 'ja':
+        return 'ja-JP';
+      default:
+        return 'en-US';
+    }
+  }
+
+  Future<void> _speakDescription(String text) async {
+    if (_isSpeaking) {
+      await _flutterTts.stop();
+      setState(() {
+        _isSpeaking = false;
+      });
+    } else {
+      setState(() {
+        _isSpeaking = true;
+      });
+
+      final locale = context.locale;
+      final ttsLanguageCode = _getTtsLanguageCode(locale.languageCode);
+
+      try {
+        await _flutterTts.setLanguage(ttsLanguageCode);
+        await _flutterTts.setSpeechRate(0.5);
+        await _flutterTts.setVolume(1.0);
+        await _flutterTts.setPitch(1.0);
+
+        await _flutterTts.speak(text);
+      } catch (e) {
+        debugPrint("TTS Error: $e");
+        if (mounted) {
+          setState(() {
+            _isSpeaking = false;
+          });
+        }
+      }
+    }
+  }
+
+  void _onGalleryImageTap(int imageIndex, List<String> images) {
+    setState(() {
+      _showVideo = false;
+      _currentImageIndex = imageIndex;
+
+      if (_videoController?.value.isInitialized == true &&
+          _videoController!.value.isPlaying) {
+        _videoController?.pause();
+      }
+
+      if (_imagePageController == null) {
+        _imagePageController = PageController(initialPage: imageIndex);
+      } else {
+        _imagePageController!.jumpToPage(imageIndex);
+      }
+    });
+  }
+
+  void _onPlayVideoTap() {
+    setState(() {
+      _showVideo = true;
+      if (_videoController?.value.isInitialized == true) {
+        _videoController?.play();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     final size = MediaQuery.of(context).size;
+    final locale = context.locale;
 
     return Scaffold(
       backgroundColor: theme.background,
-      body: Stack(
-        children: [
-          Container(
-            height: size.height * 0.45,
-            color: Colors.black,
-            child: (widget.hotel.video_link.isNotEmpty)
-                ? (_videoController.value.isInitialized
-                ? SizedBox.expand(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _videoController.value.size.width,
-                  height: _videoController.value.size.height,
-                  child: VideoPlayer(_videoController),
-                ),
-              ),
-            )
-                : const Center(child: CircularProgressIndicator(color: Colors.white)))
-                : (widget.hotel.images != null && widget.hotel.images!.isNotEmpty
-                ? ClipRRect(
-              borderRadius: BorderRadius.circular(0),
-              child: Image.network(
-                widget.hotel.images!.first,
-                width: double.infinity,
-                height: size.height * 0.45,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                const Center(child: Icon(Icons.broken_image, size: 40)),
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(child: CircularProgressIndicator(color: Colors.white));
-                },
-              ),
-            )
-                : const SizedBox.shrink()),
-          ),
-
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Consumer<HotelProvider>(
+        builder: (context, hotelProvider, _) {
+          if (_isLoading || hotelProvider.isLoadingDetail) {
+            return Center(
+              child: CircularProgressIndicator(color: theme.primary),
+            );
+          }
+          if (hotelProvider.errorDetail != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _DetailActionButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: () => Navigator.pop(context),
+                  Icon(
+                    Icons.error_outline,
+                    size: 60,
+                    color: theme.text.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    hotelProvider.errorDetail!,
+                    style: TextStyle(color: theme.text, fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadHotelDetails,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.primary,
+                    ),
+                    child: Text('common.retry'.tr()),
                   ),
                 ],
               ),
-            ),
-          ),
+            );
+          }
 
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              height: size.height * 0.60,
-              decoration: BoxDecoration(
-                color: theme.background,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(40),
-                  topRight: Radius.circular(40),
-                ),
-              ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(top: 30, left: 20, right: 20, bottom: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            widget.hotel.name,
-                            style: TextStyle(
-                              color: theme.text,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
+          final hotelDetail = hotelProvider.selectedHotel;
 
-                    Text(
-                      _buildStarRating(widget.hotel.categoryCode ?? 0),
-                      style: const TextStyle(
-                        color: Colors.amber,
-                        fontSize: 22,
-                        letterSpacing: 4.0,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
+          final name = hotelDetail != null
+              ? hotelDetail.getName(locale)
+              : widget.hotel.getName(locale);
 
-                    // Destination
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, color: theme.text, size: 18),
-                        const SizedBox(width: 5),
-                        Text(
-                          widget.hotel.destinationName ?? "",
-                          style: TextStyle(
-                            color: theme.text,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
+          final description = hotelDetail != null
+              ? hotelDetail.getDescription(locale)
+              : widget.hotel.getDescription(locale);
 
-                    const SizedBox(height: 30),
-                    _GallerySection(theme: theme, galleryImages: widget.hotel.images ?? []),
+          final destinationName = widget.hotel.getDestinationName(locale);
 
-                    const SizedBox(height: 30),
-                    Text(
-                      "Équipements",
-                      style: TextStyle(
-                        color: theme.text,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _FacilityItem(icon: Icons.wifi, label: "Wifi"),
-                        _FacilityItem(icon: FontAwesomeIcons.bath, label: "Spa"),
-                        _FacilityItem(icon: FontAwesomeIcons.utensils, label: "Restaurant"),
-                        _FacilityItem(icon: Icons.pool, label: "Piscine"),
-                      ],
-                    ),
+          final address = hotelDetail != null
+              ? hotelDetail.getAddress(locale)
+              : widget.hotel.getAddress(locale);
 
-                    const SizedBox(height: 30),
+          final categoryCode = widget.hotel.categoryCode;
 
-                    Text(
-                      "Description",
-                      style: TextStyle(
-                        color: theme.text,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Builder(
-                      builder: (context) {
-                        final fullText = _stripHtmlTags(widget.hotel.description ?? "");
-                        final truncatedText = fullText.length > 220
-                            ? fullText.substring(0, 220) + "..."
-                            : fullText;
+          final email = hotelDetail?.email ?? widget.hotel.email;
+          final phone = hotelDetail?.phone ?? widget.hotel.phone;
+          final images = hotelDetail?.images ?? widget.hotel.images ?? [];
+          final videoLink = hotelDetail?.videoLink;
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _isDescriptionExpanded ? fullText : truncatedText,
-                              style: TextStyle(
-                                color: theme.text,
-                                fontSize: 16,
-                                height: 1.5,
+          return Stack(
+            children: [
+              Container(
+                height: size.height * 0.45,
+                color: Colors.black,
+                child: _showVideo && videoLink != null && videoLink.isNotEmpty
+                    ? _videoController != null &&
+                              _videoController!.value.isInitialized
+                          ? FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: _videoController!.value.size.width,
+                                height: _videoController!.value.size.height,
+                                child: VideoPlayer(_videoController!),
                               ),
-                            ),
-                            if (fullText.length > 220)
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _isDescriptionExpanded = !_isDescriptionExpanded;
-                                  });
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 5.0),
-                                  child: Text(
-                                    _isDescriptionExpanded ? "Afficher moins" : "Afficher plus",
-                                    style: TextStyle(
-                                      color: theme.primary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
+                            )
+                          : Center(
+                              child: _isVideoInitializing
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                  : const Icon(
+                                      Icons.video_library,
+                                      size: 60,
+                                      color: Colors.white54,
                                     ),
+                            )
+                    : images.isNotEmpty
+                    ? Stack(
+                        children: [
+                          PageView.builder(
+                            controller: _imagePageController,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentImageIndex = index;
+                              });
+                            },
+                            itemCount: images.length,
+                            itemBuilder: (context, index) {
+                              return CachedNetworkImage(
+                                imageUrl: images[index],
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Center(
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        size: 40,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                              );
+                            },
+                          ),
+                          if (images.length > 1)
+                            Positioned(
+                              bottom: 60,
+                              left: 300,
+                              right: 0,
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.4),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.photo_library_outlined,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "${_currentImageIndex + 1} / ${images.length}",
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                          ],
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Contact Information
-                    _ContactSection(theme: theme, hotel: widget.hotel),
-                  ],
-                ),
+                            ),
+                        ],
+                      )
+                    : const Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: 60,
+                          color: Colors.white54,
+                        ),
+                      ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-class _DetailActionButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _DetailActionButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.4),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: Colors.white, size: 24),
-      ),
-    );
-  }
-}
-
-class _FacilityItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _FacilityItem({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Provider.of<ThemeProvider>(context).currentTheme;
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.primary.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Icon(icon, color: theme.primary, size: 24),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          label,
-          style: TextStyle(color: theme.text, fontSize: 14),
-        ),
-      ],
-    );
-  }
-}
-
-class _GallerySection extends StatelessWidget {
-  final AppTheme theme;
-  final List<String> galleryImages;
-
-  const _GallerySection({required this.theme, required this.galleryImages});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Galerie Photos",
-          style: TextStyle(
-            color: theme.text,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 15),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: galleryImages.length,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: EdgeInsets.only(right: index < galleryImages.length - 1 ? 15 : 0),
-                width: 120,
-                height: 120,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: CachedNetworkImage(
-                    imageUrl: galleryImages[index],
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                    errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 40),
+              // Back button and video toggle
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10.0,
+                    vertical: 10.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      DetailActionButton(
+                        icon: Icons.arrow_back_ios_new_rounded,
+                        onTap: () {
+                          hotelProvider.clearSelectedHotel();
+                          Navigator.pop(context);
+                        },
+                      ),
+                      if (!_showVideo &&
+                          videoLink != null &&
+                          videoLink.isNotEmpty)
+                        DetailActionButton(
+                          icon: Icons.play_circle_outline,
+                          onTap: _onPlayVideoTap,
+                        ),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-      ],
+              ),
+
+              // Content
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  height: size.height * 0.60,
+                  decoration: BoxDecoration(
+                    color: theme.background,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(40),
+                      topRight: Radius.circular(40),
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(
+                      top: 30,
+                      left: 20,
+                      right: 20,
+                      bottom: 20,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Hotel name
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: TextStyle(
+                                  color: theme.text,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+
+                        // Star rating
+                        Text(
+                          _buildStarRating(categoryCode?.toInt() ?? 0),
+                          style: const TextStyle(
+                            color: Colors.amber,
+                            fontSize: 22,
+                            letterSpacing: 4.0,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Destination
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              color: theme.text,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              destinationName ?? "",
+                              style: TextStyle(color: theme.text, fontSize: 16),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // Gallery
+                        GallerySection(
+                          theme: theme,
+                          galleryImages: images,
+                          onImageTap: (index) =>
+                              _onGalleryImageTap(index, images),
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // Amenities
+                        Text(
+                          'details.amenities'.tr(),
+                          style: TextStyle(
+                            color: theme.text,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            FacilityItem(
+                              icon: Icons.wifi,
+                              label: 'details.wifi'.tr(),
+                            ),
+                            FacilityItem(
+                              icon: FontAwesomeIcons.bath,
+                              label: 'details.spa'.tr(),
+                            ),
+                            FacilityItem(
+                              icon: FontAwesomeIcons.utensils,
+                              label: 'details.restaurant'.tr(),
+                            ),
+                            FacilityItem(
+                              icon: Icons.pool,
+                              label: 'details.pool'.tr(),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // Description
+                        DescriptionWithTts(
+                          theme: theme,
+                          description: description ?? "",
+                          isSpeaking: _isSpeaking,
+                          onSpeakToggle: () => _speakDescription(
+                            _stripHtmlTags(description ?? ""),
+                          ),
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // Contact Information
+                        ContactSection(
+                          theme: theme,
+                          email: email,
+                          phone: phone,
+                          address: address ?? "",
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
-
-class _ContactSection extends StatelessWidget {
-  final AppTheme theme;
-  final Hotel hotel;
-  const _ContactSection({required this.theme, required this.hotel});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Contact",
-          style: TextStyle(
-            color: theme.text,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 10),
-        ContactDetailRow(theme: theme, icon: Icons.email_outlined, text: hotel.email ?? "", isLink: true),
-        ContactDetailRow(theme: theme, icon: Icons.phone_outlined, text: hotel.phone, isLink: true),
-        ContactDetailRow(theme: theme, icon: Icons.location_on_outlined, text: hotel.address, isLink: false),
-      ],
-    );
-  }
-}
-

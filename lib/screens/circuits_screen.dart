@@ -3,6 +3,7 @@ import 'package:CarthagoGuide/screens/mainScreen_container.dart';
 import 'package:CarthagoGuide/widgets/circuit_card_ver.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/providers/voyage_provider.dart';
 import 'package:CarthagoGuide/models/voyage.dart';
@@ -15,7 +16,6 @@ class CircuitScreen extends StatefulWidget {
 }
 
 class _CircuitScreenState extends State<CircuitScreen> {
-  // Cache for transformed voyage data
   final Map<String, Map<String, dynamic>> _cardDataCache = {};
 
   void _toggleDrawer() {
@@ -40,11 +40,12 @@ class _CircuitScreenState extends State<CircuitScreen> {
 
     final progress = ((voyage.id.hashCode % 100) / 100).clamp(0.4, 0.9);
 
+    final daysText = 'circuits.days'.tr();
     final duration = voyage.number.isNotEmpty
-        ? '${voyage.number} ${locale.languageCode == 'fr' ? 'jours' : 'jours'}'
-        : '3 jours';
+        ? '${voyage.number} $daysText'
+        : '3 $daysText';
 
-    final name = voyage.name;
+    final name = voyage.getName(locale);
     String startDest = 'Tunis';
     String endDest = 'Various';
 
@@ -69,7 +70,9 @@ class _CircuitScreenState extends State<CircuitScreen> {
       'duration': duration,
       'startDestination': startDest,
       'endDestination': endDest,
-      'image': voyage.images.isNotEmpty ? voyage.images.first : 'assets/images/circuit1.jpg',
+      'image': voyage.images.length > 1
+          ? voyage.images[1]
+          : (voyage.images.isNotEmpty ? voyage.images[0] : 'assets/images/circuit1.jpg'),
       'progress': progress,
     };
 
@@ -103,7 +106,7 @@ class _CircuitScreenState extends State<CircuitScreen> {
           onPressed: _toggleDrawer,
         ),
         title: Text(
-          "Circuits",
+          'circuits.title'.tr(),
           style: TextStyle(
             color: theme.primary,
             fontWeight: FontWeight.bold,
@@ -123,13 +126,13 @@ class _CircuitScreenState extends State<CircuitScreen> {
             Icon(Icons.error_outline, size: 48, color: theme.text.withOpacity(0.5)),
             const SizedBox(height: 16),
             Text(
-              'Erreur de chargement',
+              'errors.fetch_failed'.tr(),
               style: TextStyle(color: theme.text, fontSize: 16),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => voyageProvider.fetchVoyages(),
-              child: Text('Réessayer', style: TextStyle(color: theme.primary)),
+              child: Text('common.retry'.tr(), style: TextStyle(color: theme.primary)),
             ),
           ],
         ),
@@ -137,14 +140,13 @@ class _CircuitScreenState extends State<CircuitScreen> {
           : voyages.isEmpty
           ? Center(
         child: Text(
-          'Aucun circuit disponible',
+          'common.check_connection'.tr(),
           style: TextStyle(color: theme.text, fontSize: 16),
         ),
       )
           : CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // Featured circuits section
           SliverPadding(
             padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
             sliver: SliverToBoxAdapter(
@@ -152,7 +154,7 @@ class _CircuitScreenState extends State<CircuitScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Circuits en vedette",
+                    'circuits.featured'.tr(),
                     style: TextStyle(
                       color: theme.text,
                       fontWeight: FontWeight.bold,
@@ -165,7 +167,6 @@ class _CircuitScreenState extends State<CircuitScreen> {
             ),
           ),
 
-          // Horizontal featured list - optimized with builder
           SliverToBoxAdapter(
             child: SizedBox(
               height: 200,
@@ -174,7 +175,6 @@ class _CircuitScreenState extends State<CircuitScreen> {
                 padding: const EdgeInsets.only(left: 20, right: 20),
                 itemCount: voyages.length > 3 ? 3 : voyages.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 15),
-                // Add cacheExtent for better performance
                 cacheExtent: 500,
                 itemBuilder: (context, index) {
                   final voyage = voyages[index];
@@ -202,7 +202,7 @@ class _CircuitScreenState extends State<CircuitScreen> {
             padding: const EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 12),
             sliver: SliverToBoxAdapter(
               child: Text(
-                "Tous les circuits",
+                'circuits.all'.tr(),
                 style: TextStyle(
                   color: theme.text,
                   fontWeight: FontWeight.bold,

@@ -24,6 +24,7 @@ class Hotel {
   final String? address_zh;
 
   final String cover;
+  final String vignette;
   final List<String>? images;
   final String video_link;
   final bool reservable;
@@ -33,6 +34,12 @@ class Hotel {
   final String destinationId;
   final int? categoryCode;
   final String? destinationName;
+  final String? destinationNameEn;
+  final String? destinationNameAR;
+  final String? destinationNameJA;
+  final String? destinationNameRU;
+  final String? destinationNameKO;
+  final String? destinationNameZH;
   final String? description;
   final String? description_en;
   final String? description_ar;
@@ -60,6 +67,7 @@ class Hotel {
     required this.name_zh,
     required this.address,
     required this.cover,
+    required this.vignette,
     required this.images,
     required this.video_link,
     required this.lat,
@@ -69,6 +77,12 @@ class Hotel {
     required this.destinationId,
     this.categoryCode,
     this.destinationName,
+    this.destinationNameEn,
+    this.destinationNameAR,
+    this.destinationNameJA,
+    this.destinationNameRU,
+    this.destinationNameKO,
+    this.destinationNameZH,
     this.description,
     this.description_ar,
     this.description_en,
@@ -90,6 +104,7 @@ class Hotel {
   });
 
   factory Hotel.fromJson(Map<String, dynamic> json) {
+    final dest = json['destination'] as Map<String, dynamic>?;
 
     return Hotel(
       id: json['id'] ?? '',
@@ -110,23 +125,33 @@ class Hotel {
       address_ko: json['address_ko'] ?? '',
       address_ja: json['address_ja'] ?? '',
       address_zh: json['address_zh'] ?? '',
-
-
       cover: json['cover'] ?? '',
-      images: json['images'] != null
-          ? List<String>.from(json['images'])
+      vignette: json['vignette'] ?? '',
+      images: json['gallery'] != null
+          ? List<String>.from(json['gallery'])
           : [],
+
       video_link: json['video_link']??'',
-      lat: json['lat'] ?? '',
-      lng: json['lng'] ?? '',
+
+      lat: dest != null ? dest['lat'].toString() : '',
+      lng: dest != null ? dest['lng'].toString() : '',
 
       reservable: json['reservable'] ?? false,
       slug: json['slug'] ?? '',
       destinationId: json['destination_id'] ?? '',
+
       categoryCode: json['category_code'] != null
           ? int.tryParse(json['category_code'].toString())
           : null,
-      destinationName: json['destination']?['name'] ?? json['ville'] ?? '',
+
+      destinationName: dest?['name'] ?? '',
+      destinationNameEn: dest?['name_en'] ?? '',
+      destinationNameAR: dest?['name_ar'] ?? '',
+      destinationNameJA: dest?['name_ja'] ?? '',
+      destinationNameRU: dest?['name_ru'] ?? '',
+      destinationNameKO: dest?['name_ko'] ?? '',
+      destinationNameZH: dest?['name_zh'] ?? '',
+
       description: json['description'] ?? '',
       description_en: json['description_en'] ?? '',
       description_ar: json['description_ar'] ?? '',
@@ -134,9 +159,9 @@ class Hotel {
       description_ru: json['description_ru'] ?? '',
       description_ko: json['description_ko'] ?? '',
       description_zh: json['description_zh'] ?? '',
+
       idCityMouradi: json['id_city_mouradi'] ?? '',
       idHotelMouradi: json['id_hotel_mouradi'] ?? '',
-
     );
   }
 
@@ -179,7 +204,6 @@ class Hotel {
         return name_zh.isNotEmpty ? name_zh : name;
       case 'ja':
         return name_ja.isNotEmpty ? name_ja : name;
-
       default:
         return name;
     }
@@ -219,6 +243,25 @@ class Hotel {
         return address_zh!.isNotEmpty ? address_zh : address;
       default:
         return address;
+    }
+  }
+
+  String? getDestinationName(Locale locale) {
+    switch (locale.languageCode) {
+      case 'ar':
+        return destinationNameAR!.isNotEmpty ? destinationNameAR : destinationName;
+      case 'en':
+        return destinationNameEn!.isNotEmpty ? destinationNameEn : destinationName;
+      case 'ru':
+        return destinationNameRU!.isNotEmpty ? destinationNameRU : destinationName;
+      case 'ko':
+        return destinationNameKO!.isNotEmpty ? destinationNameKO : destinationName;
+      case 'ja':
+        return destinationNameJA!.isNotEmpty ? destinationNameJA : destinationName;
+      case 'zh':
+        return destinationNameZH!.isNotEmpty ? destinationNameZH : destinationName;
+      default:
+        return destinationName;
     }
   }
 }

@@ -12,6 +12,7 @@ import 'package:CarthagoGuide/widgets/section_title.dart';
 import 'package:CarthagoGuide/providers/hotel_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
 class DestinationDetailsScreen extends StatefulWidget {
@@ -137,7 +138,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
 
             // Description Section
             Text(
-              "Détails de la Destination:",
+              'details.destination_details'.tr(),
               style: TextStyle(
                 color: theme.text,
                 fontSize: 24,
@@ -163,7 +164,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                   });
                 },
                 child: Text(
-                  _isDescriptionExpanded ? "Afficher moins" : "Afficher plus",
+                  _isDescriptionExpanded ? 'details.show_less'.tr() : 'details.show_more'.tr(),
                   style: TextStyle(
                     color: theme.primary,
                     fontWeight: FontWeight.bold,
@@ -174,7 +175,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
 
             // Hotels Section
             SectionTitleWidget(
-              title: "Hôtels",
+              title: 'hotels.title'.tr(),
               theme: theme,
               showMore: true,
               onTap: () {
@@ -205,7 +206,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                       ),
                       const SizedBox(height: 15),
                       Text(
-                        "Aucun hôtel disponible pour cette destination",
+                        'details.no_hotels'.tr(),
                         style: TextStyle(
                           color: theme.text.withOpacity(0.6),
                           fontSize: 16,
@@ -229,8 +230,8 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                       margin: const EdgeInsets.only(right: 15),
                       child: HotelCardWidget(
                         theme: theme,
-                        title: hotel.name,
-                        destination: hotel.destinationName ?? 'Unknown',
+                        title: hotel.getName(context.locale),
+                        destination: hotel.getDestinationName(context.locale) ?? 'Unknown',
                         imgUrl: hotel.images!.first ?? hotel.cover,
                         rating: hotel.categoryCode?.toDouble() ?? 4.0,
                         isHotel: true,
@@ -253,7 +254,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
 
 // Restaurants Section
             SectionTitleWidget(
-              title: "Restaurants",
+              title: 'restaurants.title'.tr(),
               theme: theme,
               showMore: true,
               onTap: () {
@@ -275,7 +276,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                       ),
                       const SizedBox(height: 15),
                       Text(
-                        "Aucun restaurant disponible pour cette destination",
+                        'details.no_restaurants'.tr(),
                         style: TextStyle(
                           color: theme.text.withOpacity(0.6),
                           fontSize: 16,
@@ -298,8 +299,8 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                       width: 240,
                       margin: const EdgeInsets.only(right: 15),
                       child: RestaurantCardWidget(
-                        title: resto.name,
-                        location: resto.destinationName ?? 'Unknown',
+                        title: resto.getName(context.locale),
+                        location: resto.getDestinationName(context.locale) ?? 'Unknown',
                         imgUrl: resto.images!.first,
                         rating: resto.rate?.toDouble() ?? 4.0,
                         onTap: () {
@@ -323,3 +324,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
     );
   }
 }
+/*
+
+
+*/

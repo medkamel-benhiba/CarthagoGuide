@@ -47,6 +47,7 @@ class HotelDetail {
   final List<Spo> spo;
   final List<Discount> discounts;
   final String? slug;
+  final String? videoLink;
   final String? vignette;
   final String? destinationId;
   final String? categoryCode;
@@ -101,6 +102,7 @@ class HotelDetail {
     required this.spo,
     required this.discounts,
     this.slug,
+    this.videoLink,
     this.vignette,
     this.destinationId,
     this.categoryCode,
@@ -166,6 +168,7 @@ class HotelDetail {
       description: json['description'] ?? '',
       isSpecial: parseBool(json['is_special']),
       links: Links.fromJson(json['links'] ?? {}),
+      videoLink: json['video_link'],
       options: json['options'] ?? [],
       reservable: parseBool(json['reservable']),
       bios: (json['bios'] as List<dynamic>? ?? [])
