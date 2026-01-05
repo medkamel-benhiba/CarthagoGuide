@@ -95,6 +95,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
+    final locale = Localizations.localeOf(context);
 
     return Scaffold(
       backgroundColor: theme.background,

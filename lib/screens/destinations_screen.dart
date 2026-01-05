@@ -84,6 +84,15 @@ class _DestinationScreenState extends State<DestinationScreen> {
     final containerState = context.findAncestorStateOfType<MainScreenContainerState>();
     containerState?.toggleDrawer();
   }
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<DestinationProvider>().clearSearch();
+      }
+    });
+  }
 
   Widget _buildDestinationsSkeleton(AppTheme theme) {
     Widget cardSkeleton = AspectRatio(
@@ -168,7 +177,6 @@ class _DestinationScreenState extends State<DestinationScreen> {
         ),
       )
           : SingleChildScrollView(
-        // Use ClampingScrollPhysics to prevent momentum/bounce scrolling
         physics: const ClampingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(20.0),

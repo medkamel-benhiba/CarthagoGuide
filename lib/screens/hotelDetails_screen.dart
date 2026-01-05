@@ -2,12 +2,14 @@ import 'dart:async';
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/models/hotel.dart';
 import 'package:CarthagoGuide/providers/hotel_provider.dart';
+import 'package:CarthagoGuide/utils/open_googlemaps.dart';
+import 'package:CarthagoGuide/widgets/InfoRaw.dart';
+import 'package:CarthagoGuide/widgets/MediaPlayerStack.dart';
 import 'package:CarthagoGuide/widgets/descriptionWithTTS.dart';
 import 'package:CarthagoGuide/widgets/hotels/contact_section.dart';
 import 'package:CarthagoGuide/widgets/hotels/detail_action_button.dart';
 import 'package:CarthagoGuide/widgets/hotels/facility_item.dart';
 import 'package:CarthagoGuide/widgets/hotels/gallery_section_details.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -83,23 +85,23 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
     _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
       ..initialize()
           .then((_) {
-            if (mounted) {
-              setState(() {
-                _isVideoInitializing = false;
-              });
-              _videoController?.play();
-              _videoController?.setLooping(true);
-              _videoController?.setVolume(0.0);
-            }
-          })
-          .catchError((e) {
-            debugPrint("Error initializing network video: $e");
-            if (mounted) {
-              setState(() {
-                _isVideoInitializing = false;
-              });
-            }
+        if (mounted) {
+          setState(() {
+            _isVideoInitializing = false;
           });
+          _videoController?.play();
+          _videoController?.setLooping(true);
+          _videoController?.setVolume(0.0);
+        }
+      })
+          .catchError((e) {
+        debugPrint("Error initializing network video: $e");
+        if (mounted) {
+          setState(() {
+            _isVideoInitializing = false;
+          });
+        }
+      });
   }
 
   @override
@@ -279,120 +281,22 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
 
           return Stack(
             children: [
-              Container(
-                height: size.height * 0.45,
-                color: Colors.black,
-                child: _showVideo && videoLink != null && videoLink.isNotEmpty
-                    ? _videoController != null &&
-                              _videoController!.value.isInitialized
-                          ? FittedBox(
-                              fit: BoxFit.cover,
-                              child: SizedBox(
-                                width: _videoController!.value.size.width,
-                                height: _videoController!.value.size.height,
-                                child: VideoPlayer(_videoController!),
-                              ),
-                            )
-                          : Center(
-                              child: _isVideoInitializing
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : const Icon(
-                                      Icons.video_library,
-                                      size: 60,
-                                      color: Colors.white54,
-                                    ),
-                            )
-                    : images.isNotEmpty
-                    ? Stack(
-                        children: [
-                          PageView.builder(
-                            controller: _imagePageController,
-                            onPageChanged: (index) {
-                              setState(() {
-                                _currentImageIndex = index;
-                              });
-                            },
-                            itemCount: images.length,
-                            itemBuilder: (context, index) {
-                              return CachedNetworkImage(
-                                imageUrl: images[index],
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) =>
-                                    const Center(
-                                      child: Icon(
-                                        Icons.broken_image,
-                                        size: 40,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                              );
-                            },
-                          ),
-                          if (images.length > 1)
-                            Positioned(
-                              bottom: 60,
-                              left: 300,
-                              right: 0,
-                              child: Center(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.4),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.3),
-                                      width: 1,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.photo_library_outlined,
-                                        color: Colors.white,
-                                        size: 14,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        "${_currentImageIndex + 1} / ${images.length}",
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      )
-                    : const Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          size: 60,
-                          color: Colors.white54,
-                        ),
-                      ),
+              // Media Stack (Video/Images)
+              MediaPlayerStack(
+                screenSize: size,
+                showVideo: _showVideo && videoLink != null && videoLink.isNotEmpty,
+                videoController: _videoController,
+                isVideoInitializing: _isVideoInitializing,
+                images: images,
+                imagePageController: _imagePageController,
+                currentImageIndex: _currentImageIndex,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentImageIndex = index;
+                  });
+                },
+                heightRatio: 0.45,
+                showImageIcon: true,
               ),
 
               // Back button and video toggle
@@ -423,6 +327,7 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   ),
                 ),
               ),
+
               // Content
               Align(
                 alignment: Alignment.bottomCenter,
@@ -476,17 +381,52 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                         const SizedBox(height: 10),
 
                         // Destination
-                        Row(
+                        Column(
                           children: [
-                            Icon(
-                              Icons.location_on,
-                              color: theme.text,
-                              size: 18,
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  color: theme.primary,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  destinationName ?? "",
+                                  style: TextStyle(
+                                    color: theme.text,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 5),
-                            Text(
-                              destinationName ?? "",
-                              style: TextStyle(color: theme.text, fontSize: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InfoRow(
+                                    icon: Icons.map_outlined,
+                                    text:
+                                    widget.hotel.getAddress(
+                                      context.locale,
+                                    ) ??
+                                        'N/A',
+                                    theme: theme,
+                                  ),
+                                ),
+                                if (widget.hotel.lat != null)
+                                  IconButton(
+                                    icon: Icon(Icons.map, color: theme.primary),
+                                    onPressed: () => openMap(
+                                      context,
+                                      double.tryParse(
+                                        widget.hotel.lng?.toString() ?? '',
+                                      ),
+                                      double.tryParse(
+                                        widget.hotel.lat?.toString() ?? '',
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         ),

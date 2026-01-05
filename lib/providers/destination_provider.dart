@@ -110,4 +110,9 @@ class DestinationProvider extends ChangeNotifier {
     if (destination == null) return null;
     return destination.getSubtitle(locale);
   }
+
+  void clearSearch() {
+    _searchQuery = "";
+    notifyListeners();
+  }
 }

@@ -222,7 +222,6 @@ class ApiService {
         if (jsonData == null || jsonData['activety'] == null) {
           throw Exception("API returned null data");
         }
-
         if (jsonData['activety']['data'] is List) {
           return (jsonData['activety']['data'] as List)
               .map((hotel) => Activity.fromJson(hotel))
@@ -325,7 +324,7 @@ class ApiService {
     } catch (e, stackTrace) {
       print("Error in getartisanat: $e");
       print("StackTrace: $stackTrace");
-      return []; // Return empty list on failure
+      return [];
     }
   }
 
@@ -354,7 +353,7 @@ class ApiService {
     } catch (e, stackTrace) {
       print("Error in getmonument: $e");
       print("StackTrace: $stackTrace");
-      return []; // Return empty list on failure
+      return [];
     }
   }
 

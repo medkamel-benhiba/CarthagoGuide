@@ -30,6 +30,11 @@ class Restaurant {
   final dynamic rate;
   final dynamic startingPrice;
   final Map<String, String?> openingHours;
+  final Map<String, String?> openingHours_en;
+  final Map<String, String?> openingHours_ar;
+  final Map<String, String?> openingHours_ru;
+  final Map<String, String?> openingHours_zh;
+  final Map<String, String?> openingHours_ko;
   final String? phone;
   final String? email;
   final String? website;
@@ -81,6 +86,11 @@ class Restaurant {
     this.rate,
     this.startingPrice,
     required this.openingHours,
+    required this.openingHours_en,
+    required this.openingHours_ar,
+    required this.openingHours_ru,
+    required this.openingHours_zh,
+    required this.openingHours_ko,
     this.phone,
     this.email,
     this.website,
@@ -124,33 +134,46 @@ class Restaurant {
       return null;
     }
 
-    Map<String, String?> oh = {};
-    if (json['opening_hours'] is Map) {
-      (json['opening_hours'] as Map).forEach((key, value) {
-        oh[key.toString()] = value?.toString();
-      });
+    Map<String, String?> _parseOpeningHours(dynamic openingHoursJson) {
+      Map<String, String?> hours = {};
+      if (openingHoursJson is Map) {
+        openingHoursJson.forEach((key, value) {
+          hours[key.toString()] = value?.toString();
+        });
+      }
+      return hours;
     }
+
+    // Parse all opening hours variants
+    Map<String, String?> openingHours = _parseOpeningHours(json['opening_hours']);
+    Map<String, String?> openingHours_en = _parseOpeningHours(json['opening_hours_en']);
+    Map<String, String?> openingHours_ar = _parseOpeningHours(json['opening_hours_ar']);
+    Map<String, String?> openingHours_ru = _parseOpeningHours(json['opening_hours_ru']);
+    Map<String, String?> openingHours_zh = _parseOpeningHours(json['opening_hours_zh']);
+    Map<String, String?> openingHours_ko = _parseOpeningHours(json['opening_hours_ko']);
 
     List<String> imageList = [];
     if (json['images'] is List) {
       imageList = List<String>.from(json['images'].map((img) => img.toString()));
     }
 
+    String? destName;
+    String? destNameAr;
     String? destNameEn;
     String? destNameRu;
     String? destNameJa;
     String? destNameKo;
     String? destNameZh;
 
-    String? destName;
-    if (json['destination'] is Map && json['destination']['name'] != null) {
+    if (json['destination'] is Map) {
       destName = json['destination']['name'] as String?;
-    }
-    String? destNameAr;
-    if (json['destination'] is Map && json['destination']['name_ar'] != null) {
       destNameAr = json['destination']['name_ar'] as String?;
+      destNameEn = json['destination']['name_en'] as String?;
+      destNameRu = json['destination']['name_ru'] as String?;
+      destNameJa = json['destination']['name_ja'] as String?;
+      destNameKo = json['destination']['name_ko'] as String?;
+      destNameZh = json['destination']['name_zh'] as String?;
     }
-
 
     return Restaurant(
       id: json['id'] as String? ?? '',
@@ -181,7 +204,12 @@ class Restaurant {
       lng: json['lng'] ?? '',
       rate: json['rate'],
       startingPrice: json['starting_price'],
-      openingHours: oh,
+      openingHours: openingHours,
+      openingHours_en: openingHours_en,
+      openingHours_ar: openingHours_ar,
+      openingHours_ru: openingHours_ru,
+      openingHours_zh: openingHours_zh,
+      openingHours_ko: openingHours_ko,
       phone: json['phone'] as String?,
       email: json['email'] as String?,
       website: json['website'] as String?,
@@ -218,7 +246,6 @@ class Restaurant {
       'crt_description': crtDescription,
       'address': address,
       'destination_id': destinationId,
-      // Nested destination object reconstruction
       'destination': {
         'name': destinationName,
         'name_ar': destinationNameAr,
@@ -363,6 +390,23 @@ class Restaurant {
         return (destinationNameJa != null && destinationNameJa!.isNotEmpty) ? destinationNameJa! : '';
       default:
         return destinationName ?? '';
+    }
+  }
+
+  Map<String, String?> getOpeningHours(Locale locale) {
+    switch (locale.languageCode) {
+      case 'ar':
+        return openingHours_ar.isNotEmpty ? openingHours_ar : openingHours;
+      case 'en':
+        return openingHours_en.isNotEmpty ? openingHours_en : openingHours;
+      case 'ru':
+        return openingHours_ru.isNotEmpty ? openingHours_ru : openingHours;
+      case 'zh':
+        return openingHours_zh.isNotEmpty ? openingHours_zh : openingHours;
+      case 'ko':
+        return openingHours_ko.isNotEmpty ? openingHours_ko : openingHours;
+      default:
+        return openingHours;
     }
   }
 

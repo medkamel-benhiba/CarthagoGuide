@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:CarthagoGuide/models/destination.dart';
 import 'package:CarthagoGuide/screens/destinationDetails_screen.dart';
 import 'package:CarthagoGuide/widgets/homeDestCard.dart';
@@ -20,35 +21,53 @@ class NearbyDestinationSection extends StatefulWidget {
       _NearbyDestinationSectionState();
 }
 
-class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
+class _NearbyDestinationSectionState extends State<NearbyDestinationSection>
+    with TickerProviderStateMixin {
   int currentIndex = 0;
-  Timer? _timer;
-  final Duration _autoScrollDuration = const Duration(seconds: 5);
+  int? _previousIndex;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  double _dragOffset = 0.0;
+  bool _isDragging = false;
 
-  void _startAutoScroll() {
-    if (widget.destinations.length > 1) {
-      _timer = Timer.periodic(_autoScrollDuration, (Timer timer) {
-        setState(() {
-          currentIndex = (currentIndex + 1) % widget.destinations.length;
-        });
-      });
-    }
-  }
-
-  void _stopAutoScroll() {
-    _timer?.cancel();
-    _timer = null;
+  void _animateToIndex(int newIndex) {
+    setState(() {
+      _previousIndex = currentIndex;
+      currentIndex = newIndex;
+    });
+    _fadeController.forward(from: 0);
+    _animationController.forward(from: 0);
   }
 
   @override
   void initState() {
     super.initState();
-    _startAutoScroll();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutCubic,
+    );
+    _animationController.value = 1.0;
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    );
+    _fadeController.value = 1.0;
   }
 
   @override
   void dispose() {
-    _stopAutoScroll();
+    _animationController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -69,129 +88,63 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
   @override
   Widget build(BuildContext context) {
     if (widget.destinations.isEmpty) {
-      _stopAutoScroll();
       return const SizedBox.shrink();
     }
-
-    if (widget.destinations.length <= 1 && _timer != null) {
-      _stopAutoScroll();
-    } else if (widget.destinations.length > 1 && _timer == null) {
-      _startAutoScroll();
-    }
-
-    final bool hasNext = currentIndex < widget.destinations.length - 1;
-    final bool hasNextNext = currentIndex < widget.destinations.length - 2;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 0),
+          padding: const EdgeInsets.symmetric(vertical: 5),
           child: SizedBox(
             height: 180,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                if (widget.destinations.length > 2)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 10,
-                    height: 180,
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 250,
-                      child: Opacity(
-                        opacity: 0.25,
-                        child: HomeDestCard(
-                          destination:
-                              widget.destinations[(currentIndex + 2) %
-                                  widget.destinations.length],
-                          showText: false,
-                        ),
+            child: AnimatedBuilder(
+              animation: Listenable.merge([_animation, _fadeAnimation]),
+              builder: (context, child) {
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    if (_previousIndex != null && _fadeAnimation.value < 1.0)
+                      _buildCard(
+                        context,
+                        widget.destinations[_previousIndex!],
+                        0,
+                        false,
+                        fadeOpacity: 1.0 - _fadeAnimation.value,
                       ),
-                    ),
-                  ),
 
-                if (widget.destinations.length > 1)
-                  Positioned(
-                    left: 0,
-                    right: 30,
-                    top: 10,
-                    height: 180,
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 250,
-                      child: Opacity(
-                        opacity: 0.45,
-                        child: HomeDestCard(
-                          destination:
-                              widget.destinations[(currentIndex + 1) %
-                                  widget.destinations.length],
-                          showText: false,
-                        ),
+                    if (widget.destinations.length > 2)
+                      _buildCard(
+                        context,
+                        widget.destinations[(currentIndex + 2) %
+                            widget.destinations.length],
+                        2,
+                        false,
                       ),
-                    ),
-                  ),
 
-                Positioned(
-                  left: 0,
-                  right: 60,
-                  top: 10,
-                  height: 180,
-                  child: GestureDetector(
-                    onHorizontalDragStart: (_) => _stopAutoScroll(),
-                    onHorizontalDragEnd: (details) {
-                      _startAutoScroll();
-                      const double minVelocity = 600;
-
-                      if (details.primaryVelocity! > minVelocity) {
-                        if (currentIndex > 0) {
-                          setState(() {
-                            currentIndex--;
-                          });
-                        } else {
-                          setState(() {
-                            currentIndex = widget.destinations.length - 1;
-                          });
-                        }
-                      } else if (details.primaryVelocity! < -minVelocity) {
-                        if (currentIndex < widget.destinations.length - 1) {
-                          setState(() {
-                            currentIndex++;
-                          });
-                        } else {
-                          setState(() {
-                            currentIndex = 0;
-                          });
-                        }
-                      }
-                    },
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                      child: SizedBox(
-                        key: ValueKey(currentIndex),
-                        width: double.infinity,
-                        height: 280,
-                        child: HomeDestCard(
-                          destination: widget.destinations[currentIndex],
-                          onTap: () => _navigateToDetails(
-                            context,
-                            widget.destinations[currentIndex],
-                          ),
-                        ),
+                    if (widget.destinations.length > 1)
+                      _buildCard(
+                        context,
+                        widget.destinations[(currentIndex + 1) %
+                            widget.destinations.length],
+                        1,
+                        false,
                       ),
+
+                    _buildCard(
+                      context,
+                      widget.destinations[currentIndex],
+                      0,
+                      true,
+                      fadeOpacity: _fadeAnimation.value,
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
 
         if (widget.destinations.length > 1)
           Padding(
@@ -200,9 +153,10 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 widget.destinations.length,
-                (index) => Container(
+                    (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 340),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: currentIndex == index ? 12 : 8,
+                  width: currentIndex == index ? 14 : 8,
                   height: 8,
                   decoration: BoxDecoration(
                     color: currentIndex == index
@@ -215,6 +169,116 @@ class _NearbyDestinationSectionState extends State<NearbyDestinationSection> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildCard(
+      BuildContext context,
+      Destination destination,
+      int position,
+      bool isInteractive, {
+        double fadeOpacity = 1.0,
+      }) {
+    final double dragInfluence = _isDragging ? _dragOffset / 300 : 0.0;
+    final double effectivePosition = position - dragInfluence;
+
+    final double scale = 1.0 - (effectivePosition * 0.10).clamp(0.0, 0.3);
+    final double translateX = effectivePosition * 60.0;
+    final double translateY = effectivePosition * 8.0;
+    final double rotateY = effectivePosition * 0.20;
+
+    final double baseOpacity = effectivePosition <= 0
+        ? 1.0
+        : (1.0 - (effectivePosition * 0.25)).clamp(0.3, 1.0);
+
+    final double finalOpacity = baseOpacity * fadeOpacity;
+
+    final double cardTranslateX = isInteractive ? _dragOffset : 0.0;
+    final double cardRotateZ = isInteractive ? (_dragOffset / 1000) : 0.0;
+
+    return Positioned(
+      left: 0,
+      top: translateY,
+      right: null,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 600),
+        opacity: _isDragging && isInteractive ? 1.0 : finalOpacity,
+        child: Transform.translate(
+          offset: Offset(cardTranslateX, 0),
+          child: Transform(
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..translate(translateX, 0.0, -effectivePosition * 75)
+              ..rotateY(-rotateY)
+              ..rotateZ(cardRotateZ)
+              ..scale(scale),
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: MediaQuery.of(context).size.width - 90,
+              height: 180,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(
+                        (0.25 - (effectivePosition * 0.08)).clamp(0.05, 0.25)
+                    ),
+                    blurRadius: (20 - (effectivePosition * 5)).clamp(5, 20),
+                    offset: Offset(5, 8 - (effectivePosition * 2)),
+                    spreadRadius: isInteractive && _isDragging ? 2 : 0,
+                  ),
+                ],
+              ),
+              child: isInteractive
+                  ? GestureDetector(
+                onHorizontalDragStart: (_) {
+                  setState(() {
+                    _isDragging = true;
+                  });
+                },
+                onHorizontalDragUpdate: (details) {
+                  setState(() {
+                    _dragOffset += details.delta.dx;
+                    _dragOffset = _dragOffset.clamp(-400.0, 400.0);
+                  });
+                },
+                onHorizontalDragEnd: (details) {
+                  setState(() {
+                    _isDragging = false;
+                  });
+
+                  const double threshold = 80;
+
+                  if (_dragOffset < -threshold) {
+                    int newIndex =
+                    currentIndex < widget.destinations.length - 1
+                        ? currentIndex + 1
+                        : 0;
+                    _animateToIndex(newIndex);
+                  } else if (_dragOffset > threshold) {
+                    int newIndex = currentIndex > 0
+                        ? currentIndex - 1
+                        : widget.destinations.length - 1;
+                    _animateToIndex(newIndex);
+                  }
+
+                  setState(() {
+                    _dragOffset = 0.0;
+                  });
+                },
+                onTap: () => _navigateToDetails(context, destination),
+                child: HomeDestCard(
+                  destination: destination,
+                ),
+              )
+                  : HomeDestCard(
+                destination: destination,
+                showText: true,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

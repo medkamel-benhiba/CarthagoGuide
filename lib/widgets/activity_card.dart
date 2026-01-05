@@ -25,14 +25,9 @@ class ActivityCardWidget extends StatelessWidget {
     required this.onTap,
   });
 
-  // Helper method to safely get the destination name
   String _getDestinationName(BuildContext context, DestinationProvider provider) {
     final Locale currentLocale = Localizations.localeOf(context);
-
-    // Attempt to get the destination by ID
     final Destination? destination = provider.getDestinationById(destId);
-
-    // Use the localized name if the destination is found, otherwise use a fallback
     return destination?.getName(currentLocale) ?? "Unknown Location";
   }
 
@@ -127,7 +122,7 @@ class ActivityCardWidget extends StatelessWidget {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: theme.primary.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -150,7 +145,6 @@ class ActivityCardWidget extends StatelessWidget {
               ),
             ),
 
-            // --- TITLE ---
             Positioned(
               left: padding,
               bottom: 40,
@@ -204,7 +198,6 @@ class ActivityCardWidget extends StatelessWidget {
                 ],
               ),
             ),
-
           ],
         ),
       ),

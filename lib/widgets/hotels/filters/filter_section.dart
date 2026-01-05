@@ -69,7 +69,7 @@ class FilterSection extends StatelessWidget {
       return {
         'forks': provider.minRating != null ? provider.minRating!.toInt() : null,
         'destination': provider.currentState,
-        'destinationId': provider.currentDestinationId, // Add this
+        'destinationId': provider.currentDestinationId,
         'clear': provider.clearFilters
       };
     }

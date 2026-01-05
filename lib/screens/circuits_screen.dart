@@ -32,7 +32,6 @@ class _CircuitScreenState extends State<CircuitScreen> {
   }
 
   Map<String, dynamic> _voyageToCardData(Voyage voyage, Locale locale) {
-    // Use cache to avoid repeated transformations
     final cacheKey = '${voyage.id}_${locale.languageCode}';
     if (_cardDataCache.containsKey(cacheKey)) {
       return _cardDataCache[cacheKey]!;
