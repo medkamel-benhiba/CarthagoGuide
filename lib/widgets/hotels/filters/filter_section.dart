@@ -69,6 +69,7 @@ class FilterSection extends StatelessWidget {
       return {
         'forks': provider.minRating != null ? provider.minRating!.toInt() : null,
         'destination': provider.currentState,
+        'destinationId': provider.currentDestinationId, // Add this
         'clear': provider.clearFilters
       };
     }
@@ -116,17 +117,25 @@ class FilterSection extends StatelessWidget {
         ? provider.minRating?.toInt()
         : null;
 
-    final currentDestination = provider is HotelProvider
-        ? (provider.selectedDestination ??
-        destinations
-            .firstWhereOrNull(
-                (d) => d.id == provider.selectedDestinationId)
-            ?.name)
-        : provider is GuestHouseProvider
-        ? provider.selectedDestination
-        : provider is RestaurantProvider
-        ? provider.currentState
-        : null;
+    // Updated logic to handle both currentState and currentDestinationId
+    String? currentDestination;
+    if (provider is HotelProvider) {
+      currentDestination = provider.selectedDestination ??
+          destinations
+              .firstWhereOrNull((d) => d.id == provider.selectedDestinationId)
+              ?.getName(context.locale);
+    } else if (provider is GuestHouseProvider) {
+      currentDestination = provider.selectedDestination;
+    } else if (provider is RestaurantProvider) {
+      // Check if there's a destination ID filter active
+      if (provider.currentDestinationId != null) {
+        currentDestination = destinations
+            .firstWhereOrNull((d) => d.id == provider.currentDestinationId)
+            ?.getName(context.locale);
+      } else {
+        currentDestination = provider.currentState;
+      }
+    }
 
     final VoidCallback? clearFilters = filters['clear'] as VoidCallback?;
 

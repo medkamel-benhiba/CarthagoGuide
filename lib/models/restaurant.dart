@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class Restaurant {
@@ -38,33 +37,26 @@ class Restaurant {
   final bool isSpecial;
   final bool reservable;
   final String? status;
-
-  // English fields
   final String? nameEn;
   final String? crtDescriptionEn;
   final String? addressEn;
-
-  // Arabic fields
   final String? nameAr;
   final String? crtDescriptionAr;
   final String? addressAr;
-
-  // Russian fields
   final String? nameRu;
   final String? crtDescriptionRu;
   final String? addressRu;
-
-  // Japanese fields
   final String? nameJa;
   final String? crtDescriptionJa;
   final String? addressJa;
-
-  //Korean Fields
   final String? nameKo;
   final String? crtDescriptionKo;
   final String? addressKo;
+  final String? nameZh;
+  final String? crtDescriptionZh;
+  final String? addressZh;
 
-  //Chinese Fields
+
   Restaurant({
     required this.id,
     required this.name,
@@ -121,15 +113,8 @@ class Restaurant {
     this.villeKo,
     this.villeJa,
   });
-  final String? nameZh;
-  final String? crtDescriptionZh;
-
-
-
-  final String? addressZh;
 
   factory Restaurant.fromJson(Map<String, dynamic> json) {
-    // Helper to safely parse double
     double? _parseDouble(dynamic value) {
       if (value is String) {
         return double.tryParse(value);
@@ -223,6 +208,68 @@ class Restaurant {
       crtDescriptionZh: json['crt_description_zh'] as String?,
       addressZh: json['address_zh'] as String?,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'slug': slug,
+      'crt_description': crtDescription,
+      'address': address,
+      'destination_id': destinationId,
+      // Nested destination object reconstruction
+      'destination': {
+        'name': destinationName,
+        'name_ar': destinationNameAr,
+        'name_en': destinationNameEn,
+        'name_ru': destinationNameRu,
+        'name_zh': destinationNameZh,
+        'name_ko': destinationNameKo,
+        'name_ja': destinationNameJa,
+      },
+      'city_id': cityId,
+      'ville': ville,
+      'ville_ar': villeAr,
+      'ville_en': villeEn,
+      'ville_ru': villeRu,
+      'ville_zh': villeZh,
+      'ville_ko': villeKo,
+      'ville_ja': villeJa,
+      'cover': cover,
+      'vignette': vignette,
+      'images': images,
+      'lat': lat,
+      'lng': lng,
+      'rate': rate,
+      'starting_price': startingPrice,
+      'opening_hours': openingHours,
+      'phone': phone,
+      'email': email,
+      'website': website,
+      'video_link': videoLink,
+      'is_special': isSpecial,
+      'reservable': reservable,
+      'status': status,
+      'name_en': nameEn,
+      'crt_description_en': crtDescriptionEn,
+      'address_en': addressEn,
+      'name_ar': nameAr,
+      'crt_description_ar': crtDescriptionAr,
+      'address_ar': addressAr,
+      'name_ru': nameRu,
+      'crt_description_ru': crtDescriptionRu,
+      'address_ru': addressRu,
+      'name_ja': nameJa,
+      'crt_description_ja': crtDescriptionJa,
+      'address_ja': addressJa,
+      'name_ko': nameKo,
+      'crt_description_ko': crtDescriptionKo,
+      'address_ko': addressKo,
+      'name_zh': nameZh,
+      'crt_description_zh': crtDescriptionZh,
+      'address_zh': addressZh,
+    };
   }
   String getName(Locale locale) {
     switch (locale.languageCode) {
@@ -320,7 +367,6 @@ class Restaurant {
   }
 
 
-  // For debugging purposes
   @override
   String toString() {
     return 'Restaurant(id: $id, name: $name, destinationId: $destinationId)';

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:CarthagoGuide/constants/theme.dart';
 
@@ -24,7 +25,7 @@ class GallerySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Gallery',
+          'details.gallery'.tr(),
           style: TextStyle(
             color: theme.text,
             fontSize: 20,

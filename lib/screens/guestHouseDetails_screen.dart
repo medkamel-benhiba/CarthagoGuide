@@ -26,8 +26,6 @@ class GuestHouseDetailsScreen extends StatefulWidget {
 class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
   int _selectedImageIndex = 0;
   bool _showVideo = true;
-  bool _isLoading = true;
-  bool _isVideoInitializing = false;
   PageController? _imagePageController;
   int _currentImageIndex = 0;
   VideoPlayerController? _videoController;
@@ -44,34 +42,12 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
         _videoController?.pause();
       }
 
-      // Initialize PageController if needed
       if (_imagePageController == null) {
         _imagePageController = PageController(initialPage: imageIndex);
       } else {
         _imagePageController!.jumpToPage(imageIndex);
       }
     });
-  }
-
-  Future<void> _launchUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri uri = Uri.parse('tel:$phoneNumber');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
-
-  Future<void> _sendEmail(String email) async {
-    final Uri uri = Uri.parse('mailto:$email');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
   }
 
   @override
@@ -84,14 +60,12 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
       backgroundColor: theme.background,
       body: Stack(
         children: [
-          // Main Image Gallery Section
           Container(
             height: size.height * 0.45,
             color: Colors.black,
             child: widget.guestHouse.images.isNotEmpty
                 ? Stack(
               children: [
-                // Main Image
                 PageView.builder(
                   itemCount: widget.guestHouse.images.length,
                   onPageChanged: (index) {
@@ -180,7 +154,6 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title and Rating
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -213,7 +186,6 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                             ),
                           ),
                         ),
-
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -238,8 +210,7 @@ class _GuestHouseDetailsScreenState extends State<GuestHouseDetailsScreen> {
                             icon: Icon(Icons.map, color: theme.primary),
                             onPressed: () {
                               double? lng = double.tryParse(widget.guestHouse.lng.toString());
-                              double? lat = double.tryParse(widget.guestHouse.lat.toString());
-                              openMap(context, lng, lat);
+                              double? lat = double.tryParse(widget.guestHouse.lat.toString());openMap(context, lng, lat);
                             },
                           ),
                       ],

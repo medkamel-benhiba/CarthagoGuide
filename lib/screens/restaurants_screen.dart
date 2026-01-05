@@ -43,7 +43,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
   Future<void> _autoLoadAllPages() async {
     final provider = Provider.of<RestaurantProvider>(context, listen: false);
 
-    if (!provider.hasMorePages && provider.restaurants.isNotEmpty) return;
+    if (!provider.hasMorePages && provider.allRestaurants.isNotEmpty) return;
 
     if (_isFetchingMore) return;
 

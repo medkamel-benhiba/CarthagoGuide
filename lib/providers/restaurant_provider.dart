@@ -23,14 +23,12 @@ class RestaurantProvider with ChangeNotifier {
   int _currentPage = 1;
   int get currentPage => _currentPage;
 
-  // Pagination state
   int _lastFetchedPage = 0;
   bool _hasMorePages = true;
   bool get hasMorePages => _hasMorePages;
 
   String? _errorDetail;
   String? get errorDetail => _errorDetail;
-
 
   bool _hasMore = true;
   bool get hasMore => _hasMore;
@@ -39,14 +37,26 @@ class RestaurantProvider with ChangeNotifier {
   int get totalRestaurantsCount => _totalRestaurantsCount;
   int get totalPages => (_totalRestaurantsCount / _pageSize).ceil();
 
-  // Filters
+  // --- Filter State ---
   String _searchQuery = "";
   String? _currentState;
   double? _minRating;
 
   String get searchQuery => _searchQuery;
   String? get currentState => _currentState;
+  String? _currentDestinationId;
+  String? get currentDestinationId => _currentDestinationId;
+
   double? get minRating => _minRating;
+
+  bool _isSearching = false;
+  bool get isSearching => _isSearching;
+
+  String? _error;
+  String? get error => _error;
+
+  List<Restaurant> _searchResults = [];
+  List<Restaurant> get searchResults => _searchResults;
 
   final Map<String, List<Restaurant>> _restaurantsByDestination = {};
   List<Restaurant> getRestaurantsByDestination(String destinationId) =>
@@ -55,7 +65,49 @@ class RestaurantProvider with ChangeNotifier {
   Restaurant? _selectedRestaurant;
   Restaurant? get selectedRestaurant => _selectedRestaurant;
 
-  // ---------------------------------------------------------------------------
+  void filterByDestination(String destinationId) {
+    _currentDestinationId = destinationId;
+    _currentPage = 1;
+    _applyFiltersAndPagination();
+    notifyListeners();
+  }
+
+
+  void searchRestaurants(String query) {
+    _isSearching = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _searchQuery = query.toLowerCase();
+
+      if (_searchQuery.isEmpty) {
+        _searchResults = [];
+      } else {
+        _searchResults = _allRestaurants.where((r) {
+          final name = r.getName(const Locale("fr")).toLowerCase();
+          return name.contains(_searchQuery);
+        }).toList();
+      }
+    } catch (e) {
+      _error = "Search failed: $e";
+      debugPrint("❌ Search Error: $e");
+    } finally {
+      _isSearching = false;
+      notifyListeners();
+    }
+  }
+
+  /// Resets search state
+  void clearSearch() {
+    _searchQuery = "";
+    _searchResults = [];
+    _isSearching = false;
+    _error = null;
+    notifyListeners();
+  }
+
+  // fetchRestaurants
   Future<void> fetchAllRestaurants() async {
     if (_isLoading) return;
 
@@ -77,7 +129,6 @@ class RestaurantProvider with ChangeNotifier {
       }
 
       _applyFiltersAndPagination();
-
     } catch (e) {
       _errorDetail = "Failed to load restaurants: $e";
       _allRestaurants = [];
@@ -88,8 +139,14 @@ class RestaurantProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // LOAD MORE PAGES
+  Future<void> continueLoadingAllPages() async {
+    while (_hasMorePages && !_isLoading) {
+      await loadMoreFromAPI();
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+  }
 
-  // ---------------------------------------------------------------------------
   Future<void> loadMoreFromAPI() async {
     if (_isLoading || !_hasMorePages) return;
 
@@ -107,6 +164,8 @@ class RestaurantProvider with ChangeNotifier {
       if (nextRestaurants.isNotEmpty) {
         _allRestaurants.addAll(nextRestaurants);
         _lastFetchedPage = nextPage;
+
+        // Reapply filters with new data
         _applyFiltersAndPagination();
       }
     } catch (e) {
@@ -117,7 +176,7 @@ class RestaurantProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Filters setters
+  // Filter Setters
   void setSearchQuery(String query) {
     _searchQuery = query.toLowerCase();
     _currentPage = 1;
@@ -139,39 +198,37 @@ class RestaurantProvider with ChangeNotifier {
   void clearFilters() {
     _searchQuery = "";
     _currentState = null;
+    _currentDestinationId = null;
     _minRating = null;
     _currentPage = 1;
     _applyFiltersAndPagination();
   }
 
-  // Pagination
-  // --------------------------------------------------------------------------
   void loadPage(int page) {
     _currentPage = page;
     _applyFiltersAndPagination();
   }
 
-  // --------------------------------------------------------------------------
   void _applyFiltersAndPagination() {
     List<Restaurant> filtered = List.from(_allRestaurants);
 
-    // Filter by state
-    if (_currentState != null) {
-      filtered = filtered
-          .where((r) =>
-      r.destinationName?.toLowerCase() ==
-          _currentState!.toLowerCase())
-          .toList();
+    if (_currentDestinationId != null) {
+      filtered = filtered.where((r) =>
+      r.destinationId == _currentDestinationId
+      ).toList();
     }
 
-    // Filter by min rating
+    if (_currentState != null) {
+      filtered = filtered.where((r) =>
+      r.destinationName?.toLowerCase() == _currentState!.toLowerCase()
+      ).toList();
+    }
     if (_minRating != null) {
       filtered = filtered
           .where((r) => (r.rate is num ? r.rate.toDouble() : 0.0) >= _minRating!)
           .toList();
     }
 
-    // Filter by search query
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((r) {
         final name = r.getName(const Locale("fr")).toLowerCase();
@@ -181,7 +238,6 @@ class RestaurantProvider with ChangeNotifier {
 
     _totalRestaurantsCount = filtered.length;
 
-    // Pagination
     final startIndex = (_currentPage - 1) * _pageSize;
     final endIndex = startIndex + _pageSize;
 
@@ -196,13 +252,9 @@ class RestaurantProvider with ChangeNotifier {
       _hasMore = endIndex < filtered.length;
     }
 
-    _isLoading = false;
     notifyListeners();
   }
 
-  // --------------------------------------------------------------------------
-  // Select restaurant by slug
-  // --------------------------------------------------------------------------
   Future<void> selectRestaurantBySlug(String slug) async {
     final i = _allRestaurants.indexWhere(
           (r) => r.slug?.toLowerCase() == slug.toLowerCase(),

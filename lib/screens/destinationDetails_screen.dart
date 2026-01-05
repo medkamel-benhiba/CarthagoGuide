@@ -4,6 +4,7 @@ import 'package:CarthagoGuide/providers/restaurant_provider.dart';
 import 'package:CarthagoGuide/screens/hotelDetails_screen.dart';
 import 'package:CarthagoGuide/screens/hotels_screen.dart';
 import 'package:CarthagoGuide/screens/restaurantDetails_screen.dart';
+import 'package:CarthagoGuide/screens/restaurants_screen.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_card.dart';
 import 'package:CarthagoGuide/widgets/restaurant_card.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -11,6 +12,7 @@ import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/widgets/section_title.dart';
 import 'package:CarthagoGuide/providers/hotel_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -23,13 +25,12 @@ class DestinationDetailsScreen extends StatefulWidget {
   final VoidCallback? onNavigateToHotels;
   final VoidCallback? onNavigateToRestaurants;
 
-
   const DestinationDetailsScreen({
     super.key,
     this.title,
-     this.description,
-     this.gallery,
-     this.destinationId,
+    this.description,
+    this.gallery,
+    this.destinationId,
     this.onNavigateToHotels,
     this.onNavigateToRestaurants,
   });
@@ -45,16 +46,15 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
   List<Hotel> _destinationHotels = [];
   List<Restaurant> _destinationRestaurants = [];
 
-
   @override
   void initState() {
     super.initState();
 
-    // Filter hotels by destination from all hotels
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final hotelProvider = Provider.of<HotelProvider>(context, listen: false);
+      final restaurantProvider = Provider.of<RestaurantProvider>(context, listen: false);
+
       setState(() {
-        // Filter hotels where destinationId matches
         _destinationHotels = hotelProvider.allHotels
             .where((hotel) => hotel.destinationId == widget.destinationId)
             .toList();
@@ -62,19 +62,14 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
         print("Filtering hotels for destination: ${widget.destinationId}");
         print("Found ${_destinationHotels.length} hotels");
 
-        final restaurantProvider =
-        Provider.of<RestaurantProvider>(context, listen: false);
-
         _destinationRestaurants = restaurantProvider.allRestaurants
             .where((resto) => resto.destinationId == widget.destinationId)
             .toList();
 
         print("Filtering restaurants for destination: ${widget.destinationId}");
         print("Found ${_destinationRestaurants.length} restaurants");
-
       });
     });
-
   }
 
   @override
@@ -88,7 +83,6 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
         ? (widget.description ?? '')
         : (widget.description?.substring(0, _maxDescriptionLength) ?? '') + '...';
 
-
     return Scaffold(
       backgroundColor: theme.background,
       appBar: AppBar(
@@ -96,7 +90,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
         elevation: 0,
         iconTheme: IconThemeData(color: theme.text),
         title: Text(
-          widget.title?? "",
+          widget.title ?? "",
           style: TextStyle(color: theme.primary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -106,7 +100,6 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gallery Carousel
             CarouselSlider.builder(
               itemCount: widget.gallery?.length ?? 0,
               itemBuilder: (context, index, realIndex) {
@@ -117,9 +110,9 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                     imageUrl: imgUrl,
                     fit: BoxFit.cover,
                     placeholder: (context, url) =>
-                        const Center(child: CircularProgressIndicator()),
+                    const Center(child: CircularProgressIndicator()),
                     errorWidget: (context, url, error) =>
-                        const Icon(Icons.broken_image, size: 50),
+                    const Icon(Icons.broken_image, size: 50),
                   ),
                 );
               },
@@ -136,7 +129,6 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Description Section
             Text(
               'details.destination_details'.tr(),
               style: TextStyle(
@@ -181,16 +173,9 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
               onTap: () {
                 final hotelProvider = Provider.of<HotelProvider>(context, listen: false);
                 hotelProvider.filterByDestination(widget.destinationId!);
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HotelsScreen(),
-                  ),
-                );
+                context.go('/hotels');
               },
             ),
-
             const SizedBox(height: 15),
 
             if (_destinationHotels.isEmpty)
@@ -232,7 +217,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                         theme: theme,
                         title: hotel.getName(context.locale),
                         destination: hotel.getDestinationName(context.locale) ?? 'Unknown',
-                        imgUrl: hotel.images!.first ?? hotel.cover,
+                        imgUrl: hotel.vignette ?? hotel.cover,
                         rating: hotel.categoryCode?.toDouble() ?? 4.0,
                         isHotel: true,
                         onTap: () {
@@ -252,13 +237,16 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
 
             const SizedBox(height: 20),
 
-// Restaurants Section
+
+            //resto section
             SectionTitleWidget(
               title: 'restaurants.title'.tr(),
               theme: theme,
               showMore: true,
               onTap: () {
-                // Navigator.push...
+                final restaurantProvider = Provider.of<RestaurantProvider>(context, listen: false);
+                restaurantProvider.filterByDestination(widget.destinationId!);
+                context.go('/restaurants');
               },
             ),
             const SizedBox(height: 15),
@@ -270,7 +258,7 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                   child: Column(
                     children: [
                       Icon(
-                        Icons.restaurant_menu,
+                        Icons.restaurant_outlined,
                         color: theme.primary.withOpacity(0.5),
                         size: 60,
                       ),
@@ -294,21 +282,21 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                   scrollDirection: Axis.horizontal,
                   itemCount: _destinationRestaurants.take(5).length,
                   itemBuilder: (context, index) {
-                    final resto = _destinationRestaurants.take(5).toList()[index];
+                    final restaurant = _destinationRestaurants.take(5).toList()[index];
                     return Container(
                       width: 240,
                       margin: const EdgeInsets.only(right: 15),
                       child: RestaurantCardWidget(
-                        title: resto.getName(context.locale),
-                        location: resto.getDestinationName(context.locale) ?? 'Unknown',
-                        imgUrl: resto.images!.first,
-                        rating: resto.rate?.toDouble() ?? 4.0,
+                        title: restaurant.getName(context.locale),
+                        location: restaurant.getDestinationName(context.locale) ?? 'Unknown',
+                        imgUrl: restaurant.vignette!,
+                        rating: restaurant.rate?.toDouble() ?? 4.0,
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  RestaurantDetailsScreen(restaurant: resto),
+                                  RestaurantDetailsScreen(restaurant: restaurant),
                             ),
                           );
                         },
@@ -317,14 +305,9 @@ class _DestinationDetailsScreenState extends State<DestinationDetailsScreen> {
                   },
                 ),
               ),
-
           ],
         ),
       ),
     );
   }
 }
-/*
-
-
-*/

@@ -1,7 +1,6 @@
 import 'package:CarthagoGuide/constants/theme.dart';
 import 'package:CarthagoGuide/screens/destinationDetails_screen.dart';
 import 'package:CarthagoGuide/screens/mainScreen_container.dart';
-import 'package:CarthagoGuide/widgets/animatedSearchBar.dart';
 import 'package:CarthagoGuide/widgets/destination_card.dart';
 import 'package:CarthagoGuide/widgets/hotels/hotel_searchbar.dart';
 import 'package:flutter/material.dart';
@@ -135,11 +134,14 @@ class _DestinationScreenState extends State<DestinationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!mounted) {
+      return const SizedBox.shrink();
+    }
+
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     final destinationProvider = context.watch<DestinationProvider>();
     final destinations = destinationProvider.filteredDestinations;
-    final Locale = context.locale;
-
+    final locale = context.locale;
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -166,7 +168,8 @@ class _DestinationScreenState extends State<DestinationScreen> {
         ),
       )
           : SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+        // Use ClampingScrollPhysics to prevent momentum/bounce scrolling
+        physics: const ClampingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
@@ -176,7 +179,9 @@ class _DestinationScreenState extends State<DestinationScreen> {
                 theme: theme,
                 hint: 'common.search_placeholder'.tr(),
                 onChanged: (value) {
-                  destinationProvider.setSearchQuery(value);
+                  if (mounted) {
+                    destinationProvider.setSearchQuery(value);
+                  }
                 },
               ),
               const SizedBox(height: 25),
@@ -204,15 +209,16 @@ class _DestinationScreenState extends State<DestinationScreen> {
                   final d = destinations[index];
                   return DestinationCardWidget(
                     theme: theme,
-                    title: d.getName(context.locale) ?? 'activities.untitled'.tr(),
+                    title: d.getName(locale) ?? 'activities.untitled'.tr(),
                     imgUrl: d.vignette ?? "assets/images/placeholder.jpg",
                     onTap: () {
+                      if (!mounted) return;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => DestinationDetailsScreen(
-                            title: d.getName(context.locale) ?? 'activities.untitled'.tr(),
-                            description: d.getDescription(context.locale) ?? "",
+                            title: d.getName(locale) ?? 'activities.untitled'.tr(),
+                            description: d.getDescription(locale) ?? "",
                             gallery: d.gallery,
                             destinationId: d.id,
                           ),

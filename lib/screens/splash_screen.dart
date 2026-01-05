@@ -49,16 +49,22 @@ class _SplashScreenState extends State<SplashScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final hotelProvider = Provider.of<HotelProvider>(context, listen: false);
-
         Provider.of<DestinationProvider>(context, listen: false).fetchDestinations();
 
+        final hotelProvider = Provider.of<HotelProvider>(context, listen: false);
         hotelProvider.fetchAllHotels().then((_) {
           if (mounted) {
             hotelProvider.continueLoadingAllPages();
           }
         });
-        Provider.of<RestaurantProvider>(context, listen: false).fetchAllRestaurants();
+
+        final restaurantProvider = Provider.of<RestaurantProvider>(context, listen: false);
+        restaurantProvider.fetchAllRestaurants().then((_) {
+          if (mounted) {
+            restaurantProvider.continueLoadingAllPages();
+          }
+        });
+
         Provider.of<GuestHouseProvider>(context, listen: false).fetchAllGuestHouses();
         Provider.of<ActivityProvider>(context, listen: false).fetchAllActivities();
       }

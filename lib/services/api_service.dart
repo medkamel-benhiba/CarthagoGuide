@@ -15,7 +15,6 @@ import '../models/hotel.dart';
 import '../models/monument.dart';
 import '../models/musee.dart';
 import '../models/restaurant.dart';
-import 'dart:developer' as developer;
 
 
 class ApiService {
@@ -37,7 +36,7 @@ class ApiService {
 
   Future<List<StateApp>> fetchStates() async {
     final response = await http.get(Uri.parse("$_baseUrl/utilisateur/states"));
-    print("fetching states....");
+    print("fetching states...");
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -45,9 +44,7 @@ class ApiService {
       return statesJson.map((json) => StateApp.fromJson(json)).toList();
     } else {
       throw Exception("Erreur lors du chargement des states");
-
     }
-
   }
 
   Future<List<Hotel>> gethotels({int page = 1}) async {
@@ -105,6 +102,21 @@ class ApiService {
     }
   }
 
+  Future<List<Hotel>> searchHotels(String query) async {
+    final url = Uri.parse('$_baseUrl/utilisateur/hotels?search=$query');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      final List list = jsonData['hotels']['data'];
+
+      return list.map((e) => Hotel.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to search hotels');
+    }
+  }
+
   Future<List<Restaurant>> getRestaurants({int page = 1}) async {
     try {
       final response = await http.get(
@@ -125,20 +137,34 @@ class ApiService {
         throw Exception("Failed to load restaurants.");
       }
     } catch (e) {
-      print("Error in gethotels: $e");
+      print("Error in get restaurants: $e");
       rethrow;
     }
   }
+
+  Future<List<Restaurant>> searchRestaurants(String query) async {
+    final url = Uri.parse('$_baseUrl/utilisateur/restaurants?search=$query');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      final List list = jsonData['restaurants']['data'];
+
+      return list.map((e) => Restaurant.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to search restaurants');
+    }
+  }
+
 
   Future<List<GuestHouse>> getGuestHouses({int page = 1}) async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/utilisateur/maison?page=$page'),
       );
-
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-
         final List<dynamic>? guestHousesList = jsonData['maisons']?['data'];
 
         if (guestHousesList != null) {
@@ -210,7 +236,7 @@ class ApiService {
     } catch (e, stackTrace) {
       print("Error in getallactivitys: $e");
       print("StackTrace: $stackTrace");
-      return []; // Return empty list on failure
+      return [];
     }
   }
 
@@ -364,7 +390,7 @@ class ApiService {
   Future<Musees> getMuseeBySlug(String slug) async {
     try {
       final encodedSlug = Uri.encodeComponent(slug);
-      final url = Uri.parse('$_baseUrl/utilisateur/musees/$encodedSlug'); // note le chemin
+      final url = Uri.parse('$_baseUrl/utilisateur/musees/$encodedSlug');
       final response = await http.get(url);
 
       print("Request URL: $url");
@@ -440,7 +466,7 @@ class ApiService {
     } catch (e, stackTrace) {
       print("Error in getagil: $e");
       print("StackTrace: $stackTrace");
-      return []; 
+      return [];
     }
   }
 */
@@ -497,7 +523,6 @@ class ApiService {
               .map((v) => Voyage.fromJson(v))
               .toList();
 
-          // Save to SharedPreferences cache
           final prefs = await SharedPreferences.getInstance();
           prefs.setString(_cachevoy, jsonEncode(voyages.map((v) => v.toJson()).toList()));
 
@@ -512,7 +537,6 @@ class ApiService {
       print("Error in getAllVoyage: $e");
       print("StackTrace: $stackTrace");
 
-      // Try to load cached voyages if API fails
       final prefs = await SharedPreferences.getInstance();
       final cachedData = prefs.getString(_cachevoy);
       if (cachedData != null) {

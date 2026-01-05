@@ -423,7 +423,6 @@ class _HotelDetailsScreenState extends State<HotelDetailsScreen> {
                   ),
                 ),
               ),
-
               // Content
               Align(
                 alignment: Alignment.bottomCenter,

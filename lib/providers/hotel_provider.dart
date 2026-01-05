@@ -62,11 +62,19 @@ class HotelProvider with ChangeNotifier {
   List<Hotel> get hotelsByState =>
       _currentState != null ? _hotelsByState[_currentState!] ?? [] : [];
 
+  ///search API
+  List<Hotel> _searchResults = [];
+  bool _isSearching = false;
+  String? _error;
+
+  List<Hotel> get searchResults => _searchResults;
+  bool get isSearching => _isSearching;
+  String? get error => _error;
+
   // ---------------------------------------------------------------------------
   // INITIAL FETCH
   // ---------------------------------------------------------------------------
   Future<void> fetchAllHotels() async {
-
     if (_isLoading || _hasStartedFetching) return;
 
     _hasStartedFetching = true;
@@ -108,7 +116,6 @@ class HotelProvider with ChangeNotifier {
     }
   }
 
-
   Future<void> loadMoreFromAPI() async {
     if (_isLoading || !_hasMorePages) return;
 
@@ -127,7 +134,6 @@ class HotelProvider with ChangeNotifier {
         _allHotels.addAll(nextHotels);
         _lastFetchedPage = nextPage;
 
-        // Reapply filters with new data
         applyFilters();
       }
     } catch (e) {
@@ -138,9 +144,6 @@ class HotelProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ---------------------------------------------------------------------------
-  // 🔎 SEARCH + FILTERS
-  // ---------------------------------------------------------------------------
   void setSearchQuery(String value) {
     searchQuery = value.trim().toLowerCase();
     applyFilters();
@@ -164,20 +167,21 @@ class HotelProvider with ChangeNotifier {
   // Apply search + stars + destination filters
   void applyFilters() {
     _currentlyFilteredHotels = _allHotels.where((hotel) {
-      final matchesSearch = hotel.name.toLowerCase().contains(searchQuery) ||
+      final matchesSearch =
+          hotel.name.toLowerCase().contains(searchQuery) ||
           (hotel.destinationName?.toLowerCase().contains(searchQuery) ?? false);
 
       final matchesStars =
           selectedStars == null ||
-              (hotel.categoryCode?.toInt() ?? 0) == selectedStars;
+          (hotel.categoryCode?.toInt() ?? 0) == selectedStars;
 
       final matchesDestinationId =
           _selectedDestinationId == null ||
-              hotel.destinationId == _selectedDestinationId;
+          hotel.destinationId == _selectedDestinationId;
 
       final matchesDestination =
           selectedDestination == null ||
-              hotel.destinationName == selectedDestination;
+          hotel.destinationName == selectedDestination;
 
       return matchesSearch &&
           matchesStars &&
@@ -238,10 +242,12 @@ class HotelProvider with ChangeNotifier {
 
   String? getDestinationIdByCity(String cityName) {
     try {
-      return _allHotels.firstWhere(
+      return _allHotels
+          .firstWhere(
             (hotel) =>
-        hotel.destinationName?.toLowerCase() == cityName.toLowerCase(),
-      ).destinationId;
+                hotel.destinationName?.toLowerCase() == cityName.toLowerCase(),
+          )
+          .destinationId;
     } catch (_) {
       return null;
     }
@@ -302,4 +308,40 @@ class HotelProvider with ChangeNotifier {
     if (_currentState == null) return [];
     return _hotelsByState[_currentState!] ?? [];
   }
+
+  ///////////////////////////////////Search API
+
+  Future<void> searchHotels(String query) async {
+    if (query.isEmpty) {
+      clearSearch();
+      return;
+    }
+
+    _isSearching = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      debugPrint("🔍 Searching hotels with query: $query");
+      final results = await _apiService.searchHotels(query);
+      debugPrint("✅ Search returned ${results.length} hotels");
+      _searchResults = results;
+    } catch (e) {
+      debugPrint("❌ Search error: $e");
+      _error = "Failed to search hotels: ${e.toString()}";
+      _searchResults = [];
+    }
+
+    _isSearching = false;
+    notifyListeners();
+  }
+
+  void clearSearch() {
+    _searchResults = [];
+    _error = null;
+    _isSearching = false;
+    notifyListeners();
+  }
+
+
 }
